@@ -1,0 +1,21 @@
+{
+  "manifest_version": 2,
+
+  "name": "Spotify Music Videos",
+  "description": "Adds a Video tab to Spotify's web player.",
+  "version": "1.0",
+
+  "permissions": [
+    "*://play.spotify.com/"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["*://play.spotify.com/*"],
+      "css": ["css/main.css"],
+      "js": ["js/jquery.js", "js/app.js"]
+    }
+  ],
+  "background": {
+    "page": "background.html"
+  }
+}
