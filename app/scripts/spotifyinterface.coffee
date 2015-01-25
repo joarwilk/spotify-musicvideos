@@ -47,7 +47,9 @@ class SpotifyInterface
       ###
       The position interval looks at the spotify
       player DOM to retrieve the current position
-      in minutes and seconds. It's not very accurate
+      in minutes and seconds. If we're diffing
+      too much with our internal position, the
+      user has seeked
       ###
       position: setInterval(() =>
         return unless @player.playing

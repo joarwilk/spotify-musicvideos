@@ -33,6 +33,7 @@ do ->
 
     if loadImmediately
       $('#overlay').hide()
+      $('#section-user').addClass 'hidden' # User tab is open by defaut
       ui.showWatchTab()
 
     console.log  loadImmediately, 'load imme'

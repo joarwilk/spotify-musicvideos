@@ -36,10 +36,19 @@ class Player
       console.log items
       video = items[0]
 
-      @player.loadVideoById(video.id.videoId, 0, 'maxres')
-      @player.setPlaybackQuality('highres')
-      @player.mute()
-      @player.seekTo(1, true);
+      # Since we can't use the onReady youtube events due to sandboxing
+      # we have to check load state with an interval
+      YTPlayerLoadInterval = setInterval =>
+        return unless @player and @player.loadVideoById
+
+        @player.loadVideoById(video.id.videoId, 0, 'maxres')
+        @player.setPlaybackQuality('highres')
+        @player.mute()
+        @player.seekTo(1, true);
+
+        clearInterval YTPlayerLoadInterval
+        console.log 'loaded'
+      , 250
 
       ###
       interval = setInterval () =>

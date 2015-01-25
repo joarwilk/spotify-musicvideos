@@ -15,6 +15,9 @@
       "js": ["js/jquery.js", "js/app.js"]
     }
   ],
+  "web_accessible_resources": [
+    "views/*"
+  ],
   "background": {
     "page": "background.html"
   }

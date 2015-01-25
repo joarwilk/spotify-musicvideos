@@ -42,13 +42,20 @@ Player = (function() {
     };
     return this.queryYoutubeVideos((function(_this) {
       return function(items) {
-        var video;
+        var YTPlayerLoadInterval, video;
         console.log(items);
         video = items[0];
-        _this.player.loadVideoById(video.id.videoId, 0, 'maxres');
-        _this.player.setPlaybackQuality('highres');
-        _this.player.mute();
-        return _this.player.seekTo(1, true);
+        return YTPlayerLoadInterval = setInterval(function() {
+          if (!(_this.player && _this.player.loadVideoById)) {
+            return;
+          }
+          _this.player.loadVideoById(video.id.videoId, 0, 'maxres');
+          _this.player.setPlaybackQuality('highres');
+          _this.player.mute();
+          _this.player.seekTo(1, true);
+          clearInterval(YTPlayerLoadInterval);
+          return console.log('loaded');
+        }, 250);
 
         /*
         interval = setInterval () =>
@@ -166,7 +173,9 @@ SpotifyInterface = (function() {
       /*
       The position interval looks at the spotify
       player DOM to retrieve the current position
-      in minutes and seconds. It's not very accurate
+      in minutes and seconds. If we're diffing
+      too much with our internal position, the
+      user has seeked
        */
       position: setInterval((function(_this) {
         return function() {
@@ -458,6 +467,7 @@ if (window.location.pathname === '/watch') {
     });
     if (loadImmediately) {
       $('#overlay').hide();
+      $('#section-user').addClass('hidden');
       ui.showWatchTab();
     }
     return console.log(loadImmediately, 'load imme');
