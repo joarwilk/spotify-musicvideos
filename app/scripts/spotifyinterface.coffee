@@ -6,6 +6,8 @@ class SpotifyInterface
     @currentTime = 0
     @shouldRun = false
 
+    @currentPath = ''
+
     @updateElements()
 
     @callbacks =
@@ -13,6 +15,7 @@ class SpotifyInterface
       onPlayState: []
       onTrack: []
       onSeek: []
+      onUserNavigated: []
 
     @player =
       playing: @elements.playButton.hasClass 'playing'
@@ -41,6 +44,11 @@ class SpotifyInterface
     requestAnimationFrame updateTime
 
     @intervals =
+      ###
+      The position interval looks at the spotify
+      player DOM to retrieve the current position
+      in minutes and seconds. It's not very accurate
+      ###
       position: setInterval(() =>
         return unless @player.playing
 
@@ -59,6 +67,10 @@ class SpotifyInterface
           for callback in @callbacks.onSeek
             callback(milliseconds)
       , 200),
+      ###
+      The track interval looks at the play button
+      as well as the text and updates the player state
+      ###
       track: setInterval(() =>
         @updateElements()
 
@@ -83,8 +95,22 @@ class SpotifyInterface
 
           for callback in @callbacks.onTrack
             callback @getPlayerInfo()
+
           console.log "Current song: #{name} #{artist}"
-      , 250)
+      , 250),
+      ###
+      The URL interval checks the current URL
+      and fires the userNavigated callback when
+      the user has navigated
+      ###
+      url: setInterval(() =>
+        if @currentPath != window.location.pathname
+          @currentPath = window.location.pathname
+
+          for callback in @callbacks.onUserNavigated
+            callback @currentPath
+          console.log 'new path', @currentPath
+      333)
 
   stopPlayerQuery: () =>
     @shouldRun = false
@@ -102,6 +128,9 @@ class SpotifyInterface
 
   onSeek: (callback) ->
     @callbacks.onSeek.push callback
+
+  onUserNavigated: (callback) ->
+    @callbacks.onUserNavigated.push callback
 
   @get: () ->
     instance ?= new SpotifyInterface()

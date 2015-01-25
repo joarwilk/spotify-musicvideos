@@ -6,7 +6,6 @@ class Player
 
     YTAPILoadInterval = 0
     YTAPILoadInterval = setInterval () =>
-      console.log @player
       if window.YT && window.YT.Player
         clearInterval YTAPILoadInterval
         @player = new window.YT.Player 'youtube-frame', {
@@ -42,6 +41,7 @@ class Player
       @player.mute()
       @player.seekTo(1, true);
 
+      ###
       interval = setInterval () =>
         return if @player.getDuration() == 0
         clearInterval interval
@@ -66,6 +66,7 @@ class Player
 
               break
       , 200
+      ###
 
   seek: (position) =>
     console.log 'seeking to', position / 1000

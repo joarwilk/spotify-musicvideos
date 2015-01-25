@@ -25,7 +25,14 @@ do ->
     spotify.onTrack player.changeTrack
     spotify.onSeek player.seek
     spotify.onPlayState player.onPlayState
+    spotify.onUserNavigated (path) ->
+      if path is '/watch'
+        ui.showWatchTab()
+      else
+        ui.hideWatchTab()
 
     if loadImmediately
       $('#overlay').hide()
       ui.showWatchTab()
+
+    console.log  loadImmediately, 'load imme'

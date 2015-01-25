@@ -37,6 +37,7 @@ class SpotifyUI
     $('head').append('<link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">')
 
     chrome.extension.sendRequest cmd: 'read_script', (js) =>
+      YTConfig = host: "http://www.youtube.com"  unless window["YTConfig"]
       eval js
 
     #$.getScript('<script src="https://www.youtube.com/iframe_api"></script>')

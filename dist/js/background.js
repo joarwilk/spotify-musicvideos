@@ -14,4 +14,6 @@ chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
             success: sendResponse
         });
     }
+
+    console.log(request)
 })
