@@ -5,6 +5,49 @@
 
   <div id="synchronizer">
     <div id="sync-slider"></div>
-    <div id="current-sync-value"></div>
+
+    <style>
+    .sync-button {
+      display: inline-block;
+      padding: 20px 10px;
+      background: #111;
+      border: 1px solid #151515;
+      cursor: pointer;
+    }
+
+    .sync-button:hover {
+      background: #1a1a1a;
+      border: 1px solid #1f1f1f;
+    }
+
+    #current-sync-value {
+      font-size: 19px;
+      margin: 0 30px;
+      display: inline-block;
+    }
+
+    .sync-label:first-of-type {
+      margin-right: 150px;
+    }
+
+    #synchronizer {
+      text-align: center;
+    }
+    </style>
+
+    <span class="sync-label">Video is ahead</span>
+    <span class="sync-label">Music is ahead</span>
+
+    <div class="sync-controls">
+      <div class="sync-button" data-sync-change="-5000"><<<</div>
+      <div class="sync-button" data-sync-change="-1000"><<</div>
+      <div class="sync-button" data-sync-change="-100"><</div>
+
+      <div id="current-sync-value">+0.5s</div>
+
+      <div class="sync-button" data-sync-change="100">></div>
+      <div class="sync-button" data-sync-change="1000">>></div>
+      <div class="sync-button" data-sync-change="5000">>>></div>
+    </div>
   </div>
 </div>
