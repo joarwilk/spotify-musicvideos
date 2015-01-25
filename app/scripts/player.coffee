@@ -4,7 +4,6 @@ class Player
   constructor: () ->
     @currentTrack = null
 
-    YTAPILoadInterval = 0
     YTAPILoadInterval = setInterval () =>
       if window.YT && window.YT.Player
         clearInterval YTAPILoadInterval
@@ -33,7 +32,6 @@ class Player
       position: 0
 
     @queryYoutubeVideos (items) =>
-      console.log items
       video = items[0]
 
       # Since we can't use the onReady youtube events due to sandboxing
@@ -47,7 +45,6 @@ class Player
         @player.seekTo(1, true);
 
         clearInterval YTPlayerLoadInterval
-        console.log 'loaded'
       , 250
 
       ###

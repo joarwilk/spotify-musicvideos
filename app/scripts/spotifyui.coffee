@@ -74,7 +74,7 @@ class SpotifyUI
     @elements.menuItem.addClass 'active'
     @elements.tab.removeClass 'hidden'
 
-    @elements.tab.find('.root').fadeIn(600)
+    @elements.tab.find('.root').show()
 
     height = @elements.tab.find('.video-wrapper').innerHeight()
     @elements.tab.find('.video-wrapper').css top: $(window).height() / 2 - height / 2

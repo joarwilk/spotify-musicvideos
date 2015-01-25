@@ -8,7 +8,6 @@ Player = (function() {
     this.changeTrack = __bind(this.changeTrack, this);
     var YTAPILoadInterval;
     this.currentTrack = null;
-    YTAPILoadInterval = 0;
     YTAPILoadInterval = setInterval((function(_this) {
       return function() {
         if (window.YT && window.YT.Player) {
@@ -43,7 +42,6 @@ Player = (function() {
     return this.queryYoutubeVideos((function(_this) {
       return function(items) {
         var YTPlayerLoadInterval, video;
-        console.log(items);
         video = items[0];
         return YTPlayerLoadInterval = setInterval(function() {
           if (!(_this.player && _this.player.loadVideoById)) {
@@ -53,8 +51,7 @@ Player = (function() {
           _this.player.setPlaybackQuality('highres');
           _this.player.mute();
           _this.player.seekTo(1, true);
-          clearInterval(YTPlayerLoadInterval);
-          return console.log('loaded');
+          return clearInterval(YTPlayerLoadInterval);
         }, 250);
 
         /*
@@ -393,7 +390,7 @@ SpotifyUI = (function() {
     $('.active').removeClass('active');
     this.elements.menuItem.addClass('active');
     this.elements.tab.removeClass('hidden');
-    this.elements.tab.find('.root').fadeIn(600);
+    this.elements.tab.find('.root').show();
     height = this.elements.tab.find('.video-wrapper').innerHeight();
     this.elements.tab.find('.video-wrapper').css({
       top: $(window).height() / 2 - height / 2

@@ -1,23 +1,10 @@
 <div class="root">
   <div class="video-wrapper">
     <div id="youtube-frame"></div>
-    <script>
+  </div>
 
-      function receiveMessage(event)
-      {
-        if (event.origin.indexOf('sp://') !== -1) {
-          if (event.data.indexOf('position:') !== -1) {
-            var position = event.data.substr(9);
-            player.seekTo(position/1000, true);
-          }
-          else if(currentID != event.data) {
-            currentID = event.data;
-            player.loadVideoById(event.data, 0, 'maxres');
-            player.setPlaybackQuality('highres');
-            player.mute()
-          }
-        }
-      }
-    </script>
+  <div id="synchronizer">
+    <div id="sync-slider"></div>
+    <div id="current-sync-value"></div>
   </div>
 </div>
