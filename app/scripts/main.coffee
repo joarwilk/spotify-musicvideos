@@ -1,6 +1,6 @@
 if window.location.pathname == '/watch'
   window.location = '/collection/playlists#watch'
-
+window.stop()
 do ->
   ui = new SpotifyUI()
   ui.doBinds()
@@ -17,11 +17,13 @@ do ->
 
   ui.onStarted () ->
     player = new Player()
-    spotify = SpotifyInterface.get()
+    sync = new Synchronizer()
+    spotify = new SpotifyInterface()
 
     ui.onTabShown spotify.runPlayerQuery
     ui.onTabHidden spotify.stopPlayerQuery
 
+    spotify.onTrack sync.onTrack
     spotify.onTrack player.changeTrack
     spotify.onSeek player.seek
     spotify.onPlayState player.onPlayState

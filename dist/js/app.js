@@ -6,6 +6,7 @@ Player = (function() {
     this.onPlayState = __bind(this.onPlayState, this);
     this.seek = __bind(this.seek, this);
     this.changeTrack = __bind(this.changeTrack, this);
+    this.onSyncChange = __bind(this.onSyncChange, this);
     var YTAPILoadInterval;
     this.currentTrack = null;
     YTAPILoadInterval = setInterval((function(_this) {
@@ -33,11 +34,16 @@ Player = (function() {
     })(this), 100);
   }
 
+  Player.prototype.onSyncChange = function(syncValue) {
+    return this.currentTrack.sync = syncValue;
+  };
+
   Player.prototype.changeTrack = function(track) {
     this.currentTrack = {
       name: track.name,
       artist: track.artist,
-      position: 0
+      position: 0,
+      sync: 0
     };
     return this.queryYoutubeVideos((function(_this) {
       return function(items) {
@@ -429,9 +435,22 @@ SpotifyUI = (function() {
 
 })();
 
+var Synchronizer;
+
+Synchronizer = (function() {
+  function Synchronizer() {}
+
+  Synchronizer.prototype.onTrack = function(track) {};
+
+  return Synchronizer;
+
+})();
+
 if (window.location.pathname === '/watch') {
   window.location = '/collection/playlists#watch';
 }
+
+window.stop();
 
 (function() {
   var loadImmediately, ui;
@@ -447,11 +466,13 @@ if (window.location.pathname === '/watch') {
     }
   });
   return ui.onStarted(function() {
-    var player, spotify;
+    var player, spotify, sync;
     player = new Player();
-    spotify = SpotifyInterface.get();
+    sync = new Synchronizer();
+    spotify = new SpotifyInterface();
     ui.onTabShown(spotify.runPlayerQuery);
     ui.onTabHidden(spotify.stopPlayerQuery);
+    spotify.onTrack(sync.onTrack);
     spotify.onTrack(player.changeTrack);
     spotify.onSeek(player.seek);
     spotify.onPlayState(player.onPlayState);

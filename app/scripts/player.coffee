@@ -25,11 +25,15 @@ class Player
           @changeTrack @currentTrack
     , 100
 
+  onSyncChange: (syncValue) =>
+    @currentTrack.sync = syncValue
+
   changeTrack: (track) =>
     @currentTrack =
       name: track.name
       artist: track.artist
       position: 0
+      sync: 0
 
     @queryYoutubeVideos (items) =>
       video = items[0]

@@ -1,0 +1,2 @@
+class Synchronizer
+  onTrack: (track) ->
