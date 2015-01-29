@@ -11,7 +11,6 @@ class SpotifyUI
       menuItem: null
       body: $ 'body'
 
-    startClassInterval = 0
     startClassInterval = setInterval(() =>
       if @elements.body.hasClass 'started'
         for callback in @callbacks.onStarted
@@ -31,13 +30,11 @@ class SpotifyUI
   doBinds: () ->
     $(document).on 'click', '#nav-watch', @showWatchTab
 
-    $(document).on 'click', '#nav-items > li > a:not(#nav-watch, #nav-search)', @hideWatchTab
-
   loadExtraResources: () ->
     $('head').append('<link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">')
 
-    chrome.extension.sendRequest cmd: 'read_script', (js) =>
-      YTConfig = host: "http://www.youtube.com"  unless window["YTConfig"]
+    chrome.extension.sendRequest cmd: 'read_script', (js) ->
+      window.YTConfig = host: "http://www.youtube.com" unless window.YTConfig
       eval js
 
     #$.getScript('<script src="https://www.youtube.com/iframe_api"></script>')
