@@ -104,6 +104,11 @@ class SpotifyInterface
       The URL interval checks the current URL
       and fires the userNavigated callback when
       the user has navigated
+
+      A window.onPushState-event that triggers
+      for javascript history events as well
+      would be amazing, but that isn't
+      implemented in browsers yet
       ###
       url: setInterval(() =>
         if @currentPath != window.location.pathname
@@ -111,7 +116,6 @@ class SpotifyInterface
 
           for callback in @callbacks.onUserNavigated
             callback @currentPath
-          console.log 'new path', @currentPath
       333)
 
   stopPlayerQuery: () =>

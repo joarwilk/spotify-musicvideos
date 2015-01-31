@@ -1,7 +1,6 @@
 gulp = require 'gulp'
 gutil = require 'gulp-util'
-stylus = require('gulp-stylus')
-nib = require('nib')
+stylus = require 'gulp-stylus'
 imagemin = require 'gulp-imagemin'
 coffeelint = require 'gulp-coffeelint'
 coffee = require 'gulp-coffee'
@@ -15,7 +14,6 @@ taskListing = require 'gulp-task-listing'
 runSequence = require 'run-sequence'
 
 sources =
-  fonts: './app/fonts/*.*'
   styles: './app/**/*.styl'
   html: ['./app/*.html', './app/**/*.html', 'app/manifest.json']
   scripts: ['./app/**/!(main)*.coffee', './app/**/main.coffee']
@@ -31,13 +29,9 @@ gulp.task('help', taskListing);
 
 gulp.task 'style', ->
   gulp.src(sources.styles)
-  .pipe(stylus({use: [nib()]}).on('error', gutil.log))
+  .pipe(stylus().on('error', gutil.log))
   .pipe(concat('main.css'))
   .pipe(gulp.dest(destinations.css))
-
-gulp.task 'fonts', ->
-  gulp.src(sources.fonts)
-  .pipe(gulp.dest('dist/css'))
 
 gulp.task "views", ->
   gulp.src(sources.html)
@@ -76,6 +70,6 @@ gulp.task 'clean', ->
   gulp.src(['dist/'], {read: false}).pipe(clean())
 
 gulp.task 'build', ->
-  runSequence 'clean', ['style', 'fonts', 'lint', 'src', 'views', 'images']
+  runSequence 'clean', ['style', 'lint', 'src', 'views', 'images']
 
 gulp.task 'default', ['build', 'watch']
