@@ -6,7 +6,8 @@
   "version": "1.0",
 
   "permissions": [
-    "*://play.spotify.com/"
+    "*://play.spotify.com/",
+    "storage"
   ],
   "content_scripts": [
     {

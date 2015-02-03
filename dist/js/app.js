@@ -42,14 +42,15 @@ Player = (function() {
     this.currentTrack = {
       name: track.name,
       artist: track.artist,
+      duration: track.duration,
       position: 0,
       sync: 0
     };
     return this.queryYoutubeVideos((function(_this) {
       return function(items) {
-        var YTPlayerLoadInterval, video;
+        var YTPlayerLoadInterval, interval, video;
         video = items[0];
-        return YTPlayerLoadInterval = setInterval(function() {
+        YTPlayerLoadInterval = setInterval(function() {
           if (!(_this.player && _this.player.loadVideoById)) {
             return;
           }
@@ -59,33 +60,38 @@ Player = (function() {
           _this.player.seekTo(1, true);
           return clearInterval(YTPlayerLoadInterval);
         }, 250);
-
-        /*
-        interval = setInterval () =>
-          return if @player.getDuration() == 0
-          clearInterval interval
-        
-          query = "#{track.name} #{track.artist} official"
-          $.getJSON "https://api.soundcloud.com/tracks.json?q=#{query}&client_id=b45b1aa10f1ac2941910a7f0d10f8e28&app_version=9dc8303", (items) =>
-        
-            for item, i in items
-              diff = Math.abs((item.duration / 1000) - @player.getDuration())
-        
-              if diff < 2
-                console.log "Using " + item.title
-                params =
-                  youtube: video.id.videoId
-                  ytime: @player.getDuration()
-                  soundcloud: item.permalink_url
-                  stime: parseInt item.duration / 1000
-        
-                $.getJSON('http://localhost:8888/delay', params, (delay) ->
-                  console.log delay
-                ).error((a,b) -> console.error(a, b))
-        
-                break
-        , 200
-         */
+        return interval = setInterval(function() {
+          var query;
+          clearInterval(interval);
+          query = "" + track.name + " " + track.artist + " official";
+          return $.getJSON("https://api.soundcloud.com/tracks.json?q=" + query + "&client_id=b45b1aa10f1ac2941910a7f0d10f8e28&app_version=9dc8303", function(items) {
+            var diff, i, item, params, _i, _len, _results;
+            _results = [];
+            for (i = _i = 0, _len = items.length; _i < _len; i = ++_i) {
+              item = items[i];
+              diff = Math.abs((item.duration / 1000) - _this.currentTrack.duration);
+              console.log('track diff ', item.duration / 1000, _this.currentTrack.duration, item.title);
+              if (diff < 2) {
+                console.log("Using " + item.title);
+                params = {
+                  youtube: video.id.videoId,
+                  ytime: _this.currentTrack.duration,
+                  soundcloud: item.permalink_url,
+                  stime: parseInt(item.duration / 1000)
+                };
+                $.getJSON('http://localhost:8888/delay', params, function(delay) {
+                  return console.log(delay);
+                }).error(function(a, b) {
+                  return console.error(a, b);
+                });
+                break;
+              } else {
+                _results.push(void 0);
+              }
+            }
+            return _results;
+          });
+        }, 200);
       };
     })(this));
   };
@@ -142,7 +148,8 @@ SpotifyInterface = (function() {
       playing: this.elements.playButton.hasClass('playing'),
       position: 0,
       name: this.elements.trackName.text(),
-      artist: this.elements.trackArtist.text()
+      artist: this.elements.trackArtist.text(),
+      duration: 0
     };
   }
 
@@ -151,9 +158,10 @@ SpotifyInterface = (function() {
     context = $('#app-player').contents();
     return this.elements = {
       playButton: $('#play-pause', context),
-      timeMarker: $('#track-current', context),
       trackName: $('#track-name a', context),
-      trackArtist: $('#track-artist a', context)
+      trackArtist: $('#track-artist a', context),
+      timeMarker: $('#track-current', context),
+      duration: $('#track-length', context)
     };
   };
 
@@ -211,7 +219,7 @@ SpotifyInterface = (function() {
        */
       track: setInterval((function(_this) {
         return function() {
-          var artist, artistChanged, callback, name, playStateChanged, trackChanged, _i, _j, _len, _len1, _ref, _ref1;
+          var artist, artistChanged, callback, duration, name, playStateChanged, trackChanged, _i, _j, _len, _len1, _ref, _ref1;
           _this.updateElements();
           name = _this.elements.trackName[0].innerText;
           artist = _this.elements.trackArtist[0].innerText;
@@ -230,6 +238,9 @@ SpotifyInterface = (function() {
           if (trackChanged || artistChanged) {
             _this.player.name = name;
             _this.player.artist = artist;
+            duration = _this.elements.duration[0].innerText.split(':');
+            _this.player.duration = parseInt(duration[0] * 60) + parseInt(duration[1]);
+            console.log(_this.player.duration);
             _ref1 = _this.callbacks.onTrack;
             for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
               callback = _ref1[_j];
@@ -244,18 +255,24 @@ SpotifyInterface = (function() {
       The URL interval checks the current URL
       and fires the userNavigated callback when
       the user has navigated
+      
+      A window.onPushState-event that triggers
+      for javascript history events as well
+      would be amazing, but that isn't
+      implemented in browsers yet
        */
       url: setInterval((function(_this) {
         return function() {
-          var callback, _i, _len, _ref;
+          var callback, _i, _len, _ref, _results;
           if (_this.currentPath !== window.location.pathname) {
             _this.currentPath = window.location.pathname;
             _ref = _this.callbacks.onUserNavigated;
+            _results = [];
             for (_i = 0, _len = _ref.length; _i < _len; _i++) {
               callback = _ref[_i];
-              callback(_this.currentPath);
+              _results.push(callback(_this.currentPath));
             }
-            return console.log('new path', _this.currentPath);
+            return _results;
           }
         };
       })(this), 333)
@@ -320,7 +337,6 @@ SpotifyUI = (function() {
       menuItem: null,
       body: $('body')
     };
-    startClassInterval = 0;
     startClassInterval = setInterval((function(_this) {
       return function() {
         var callback, _i, _len, _ref;
@@ -349,25 +365,21 @@ SpotifyUI = (function() {
   };
 
   SpotifyUI.prototype.doBinds = function() {
-    $(document).on('click', '#nav-watch', this.showWatchTab);
-    return $(document).on('click', '#nav-items > li > a:not(#nav-watch, #nav-search)', this.hideWatchTab);
+    return $(document).on('click', '#nav-watch', this.showWatchTab);
   };
 
   SpotifyUI.prototype.loadExtraResources = function() {
     $('head').append('<link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">');
     return chrome.extension.sendRequest({
       cmd: 'read_script'
-    }, (function(_this) {
-      return function(js) {
-        var YTConfig;
-        if (!window["YTConfig"]) {
-          YTConfig = {
-            host: "http://www.youtube.com"
-          };
-        }
-        return eval(js);
-      };
-    })(this));
+    }, function(js) {
+      if (!window.YTConfig) {
+        window.YTConfig = {
+          host: "http://www.youtube.com"
+        };
+      }
+      return eval(js);
+    });
   };
 
   SpotifyUI.prototype.attachMenuItem = function() {
@@ -440,7 +452,9 @@ var Synchronizer;
 Synchronizer = (function() {
   function Synchronizer() {}
 
-  Synchronizer.prototype.onTrack = function(track) {};
+  Synchronizer.prototype.onTrack = function(track) {
+    return console.log(chrome);
+  };
 
   return Synchronizer;
 
@@ -449,8 +463,6 @@ Synchronizer = (function() {
 if (window.location.pathname === '/watch') {
   window.location = '/collection/playlists#watch';
 }
-
-window.stop();
 
 (function() {
   var loadImmediately, ui;
@@ -477,17 +489,14 @@ window.stop();
     spotify.onSeek(player.seek);
     spotify.onPlayState(player.onPlayState);
     spotify.onUserNavigated(function(path) {
-      if (path === '/watch') {
-        return ui.showWatchTab();
-      } else {
+      if (path === !'/watch') {
         return ui.hideWatchTab();
       }
     });
     if (loadImmediately) {
       $('#overlay').hide();
       $('#section-user').addClass('hidden');
-      ui.showWatchTab();
+      return ui.showWatchTab();
     }
-    return console.log(loadImmediately, 'load imme');
   });
 })();

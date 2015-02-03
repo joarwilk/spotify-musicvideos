@@ -22,15 +22,17 @@ class SpotifyInterface
       position: 0
       name: @elements.trackName.text()
       artist: @elements.trackArtist.text()
+      duration: 0
 
   updateElements: () =>
     context = $('#app-player').contents() # The player iframe widget
 
     @elements =
       playButton: $('#play-pause', context)
-      timeMarker: $('#track-current', context)
       trackName: $('#track-name a', context)
       trackArtist: $('#track-artist a', context)
+      timeMarker: $('#track-current', context)
+      duration: $('#track-length', context)
 
   runPlayerQuery: () =>
     @shouldRun = true
@@ -94,6 +96,11 @@ class SpotifyInterface
         if trackChanged or artistChanged
           @player.name = name
           @player.artist = artist
+
+          # Turn a m:s format into seconds
+          duration = @elements.duration[0].innerText.split(':')
+          @player.duration = parseInt(duration[0] * 60) + parseInt(duration[1])
+          console.log @player.duration
 
           for callback in @callbacks.onTrack
             callback @getPlayerInfo()

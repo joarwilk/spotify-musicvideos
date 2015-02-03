@@ -32,6 +32,7 @@ class Player
     @currentTrack =
       name: track.name
       artist: track.artist
+      duration: track.duration
       position: 0
       sync: 0
 
@@ -51,22 +52,21 @@ class Player
         clearInterval YTPlayerLoadInterval
       , 250
 
-      ###
+
       interval = setInterval () =>
-        return if @player.getDuration() == 0
         clearInterval interval
 
         query = "#{track.name} #{track.artist} official"
         $.getJSON "https://api.soundcloud.com/tracks.json?q=#{query}&client_id=b45b1aa10f1ac2941910a7f0d10f8e28&app_version=9dc8303", (items) =>
 
           for item, i in items
-            diff = Math.abs((item.duration / 1000) - @player.getDuration())
-
+            diff = Math.abs((item.duration / 1000) - @currentTrack.duration)
+            console.log 'track diff ', item.duration/1000, @currentTrack.duration, item.title
             if diff < 2
               console.log "Using " + item.title
               params =
                 youtube: video.id.videoId
-                ytime: @player.getDuration()
+                ytime: @currentTrack.duration
                 soundcloud: item.permalink_url
                 stime: parseInt item.duration / 1000
 
@@ -76,7 +76,7 @@ class Player
 
               break
       , 200
-      ###
+
 
   seek: (position) =>
     console.log 'seeking to', position / 1000
