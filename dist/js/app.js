@@ -49,6 +49,9 @@ Player = (function() {
     return this.queryYoutubeVideos((function(_this) {
       return function(items) {
         var YTPlayerLoadInterval, interval, video;
+        if (!items) {
+          return;
+        }
         video = items[0];
         YTPlayerLoadInterval = setInterval(function() {
           if (!(_this.player && _this.player.loadVideoById)) {
@@ -56,7 +59,6 @@ Player = (function() {
           }
           _this.player.loadVideoById(video.id.videoId, 0, 'maxres');
           _this.player.setPlaybackQuality('highres');
-          _this.player.mute();
           _this.player.seekTo(1, true);
           return clearInterval(YTPlayerLoadInterval);
         }, 250);
@@ -364,8 +366,17 @@ SpotifyUI = (function() {
     return this.callbacks.onTabHidden.push(callback);
   };
 
+  SpotifyUI.prototype.onResize = function() {
+    var height;
+    height = this.elements.tab.find('.video-wrapper').innerHeight();
+    return this.elements.tab.find('.video-wrapper').css({
+      top: $(window).height() / 2 - height / 2
+    });
+  };
+
   SpotifyUI.prototype.doBinds = function() {
-    return $(document).on('click', '#nav-watch', this.showWatchTab);
+    $(document).on('click', '#nav-watch', this.showWatchTab);
+    return $(window).on('resize', this.onResize);
   };
 
   SpotifyUI.prototype.loadExtraResources = function() {
@@ -404,15 +415,12 @@ SpotifyUI = (function() {
   };
 
   SpotifyUI.prototype.showWatchTab = function() {
-    var callback, height, _i, _len, _ref;
+    var callback, _i, _len, _ref;
     $('.active').removeClass('active');
     this.elements.menuItem.addClass('active');
     this.elements.tab.removeClass('hidden');
     this.elements.tab.find('.root').show();
-    height = this.elements.tab.find('.video-wrapper').innerHeight();
-    this.elements.tab.find('.video-wrapper').css({
-      top: $(window).height() / 2 - height / 2
-    });
+    $(window).resize();
     _ref = this.callbacks.onTabShown;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       callback = _ref[_i];
@@ -489,7 +497,7 @@ if (window.location.pathname === '/watch') {
     spotify.onSeek(player.seek);
     spotify.onPlayState(player.onPlayState);
     spotify.onUserNavigated(function(path) {
-      if (path === !'/watch') {
+      if (path !== '/watch') {
         return ui.hideWatchTab();
       }
     });

@@ -28,7 +28,7 @@ do ->
     spotify.onSeek player.seek
     spotify.onPlayState player.onPlayState
     spotify.onUserNavigated (path) ->
-      if path is not '/watch'
+      if path isnt '/watch'
         ui.hideWatchTab()
 
     if loadImmediately

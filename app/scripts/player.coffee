@@ -37,6 +37,8 @@ class Player
       sync: 0
 
     @queryYoutubeVideos (items) =>
+      return unless items
+
       video = items[0]
 
       # Since we can't use the onReady youtube events due to sandboxing
@@ -46,7 +48,7 @@ class Player
 
         @player.loadVideoById(video.id.videoId, 0, 'maxres')
         @player.setPlaybackQuality('highres')
-        @player.mute()
+        #@player.mute()
         @player.seekTo(1, true);
 
         clearInterval YTPlayerLoadInterval
