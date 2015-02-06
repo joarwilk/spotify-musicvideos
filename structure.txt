@@ -26,5 +26,22 @@ SpotifyUI
 - Adds elements to sidebar
 - Handles fullscreen mode
 
+VideoUI
+- Does video overlays like trackname/artist
+- Handles video transitions and loading screens
+
 Remote
-- Queries remote server
+- Has its own cache
+- Queries remote server for video data
+Sends: track name and song
+Recieves:
+{
+  id: youtube video id
+  start: start offset (in case of video intro)
+  end: end offset (in case of outro)
+}
+
+or in case of error:
+{
+  error: error message
+}

@@ -49,7 +49,7 @@ gulp.task 'src', ->
   .pipe(gulp.dest(destinations.js))
   gulp.src(sources.scripts)
   .pipe(coffee({bare: true}).on('error', gutil.log))
-  .pipe(concat('app.js'))
+  #.pipe(concat('app.js'))
   #.pipe(uglify())
   .pipe(gulp.dest(destinations.js))
 
