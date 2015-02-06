@@ -1,0 +1,30 @@
+Eventmanager
+- Click events for
+Play btn
+Next / prev song
+Scrubber
+Fullscreen buttons
+
+YoutubePlayer
+- Controls youtube iframe via API
+- Middleman for player state control
+- Handles and relays player state events (buffering, finished etc)
+- Little logic, mostly recieves direct instructions
+- Fetches duration information
+
+SpotifyInterface
+- Fetches track information
+- Overrides default Spotify behaviour
+Block playbutton events to spotify, route to
+youtube instead
+Connects scrub events to youtube
+
+SpotifyUI
+- Adds tab icon in navbar
+- Loads custom css and icons
+- Loads watch tab html
+- Adds elements to sidebar
+- Handles fullscreen mode
+
+Remote
+- Queries remote server

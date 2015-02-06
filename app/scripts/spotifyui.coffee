@@ -10,6 +10,7 @@ class SpotifyUI
       tab: null
       menuItem: null
       body: $ 'body'
+      wrapper: null
 
     startClassInterval = setInterval(() =>
       if @elements.body.hasClass 'started'
@@ -27,18 +28,21 @@ class SpotifyUI
   onTabHidden: (callback) ->
     @callbacks.onTabHidden.push callback
 
-  onResize: () ->
-    height = @elements.tab.find('.video-wrapper').innerHeight()
-    @elements.tab.find('.video-wrapper').css top: $(window).height() / 2 - height / 2
+  onResize: () =>
+    return unless @elements.wrapper
+
+    height = @elements.wrapper.innerHeight()
+    @elements.wrapper.css top: $(window).height() / 2 - height / 2
 
   doBinds: () ->
     $(document).on 'click', '#nav-watch', @showWatchTab
     $(window).on 'resize', @onResize
 
   loadExtraResources: () ->
+    # TODO: Move this to local file (faster loading)
     $('head').append('<link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">')
 
-    chrome.extension.sendRequest cmd: 'read_script', (js) ->
+    chrome.extension.sendRequest { method: 'getScript', file: 'youtube' }, (js) ->
       window.YTConfig = host: "http://www.youtube.com" unless window.YTConfig
       eval js
 
@@ -64,9 +68,15 @@ class SpotifyUI
     """
 
     @elements.tab = $(tabHTML).insertAfter $('#section-follow')
-    chrome.extension.sendRequest cmd: 'read_file', (html) =>
+
+    request =
+      method: 'getView'
+      file: 'tab'
+    chrome.extension.sendRequest request, (html) =>
       @elements.tab.html(html)
       @elements.throbber = @elements.tab.find '.throbber'
+      @elements.wrapper = @elements.tab.find '.video-wrapper'
+
       @showLoadingOverlay()
 
   showWatchTab: () =>

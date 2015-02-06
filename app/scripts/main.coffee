@@ -1,4 +1,5 @@
 if window.location.pathname == '/watch'
+  # The playlist page has the fastest load time
   window.location = '/collection/playlists#watch'
 
 do ->
@@ -6,6 +7,7 @@ do ->
   ui.doBinds()
   ui.loadExtraResources()
 
+  # Check if the user requested /watch
   loadImmediately = window.location.hash == '#watch'
 
   $(document).ready () ->

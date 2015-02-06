@@ -21,6 +21,14 @@ class Player
           }
         }
 
+        @player.addEventListener 'onStateChange', (state) ->
+          console.log state, 'state'
+
+          if state.data == 0
+            context = $('#app-player').contents() # The player iframe widget
+            $('#next', context).click()
+
+
         if @currentTrack is not null
           @changeTrack @currentTrack
     , 100

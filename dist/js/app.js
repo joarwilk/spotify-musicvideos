@@ -26,6 +26,14 @@ Player = (function() {
               'showinfo': 0
             }
           });
+          _this.player.addEventListener('onStateChange', function(state) {
+            var context;
+            console.log(state, 'state');
+            if (state.data === 0) {
+              context = $('#app-player').contents();
+              return $('#next', context).click();
+            }
+          });
           if (_this.currentTrack === !null) {
             return _this.changeTrack(_this.currentTrack);
           }
@@ -328,6 +336,7 @@ SpotifyUI = (function() {
   function SpotifyUI() {
     this.hideWatchTab = __bind(this.hideWatchTab, this);
     this.showWatchTab = __bind(this.showWatchTab, this);
+    this.onResize = __bind(this.onResize, this);
     var startClassInterval;
     this.callbacks = {
       onStarted: [],
@@ -337,7 +346,8 @@ SpotifyUI = (function() {
     this.elements = {
       tab: null,
       menuItem: null,
-      body: $('body')
+      body: $('body'),
+      wrapper: null
     };
     startClassInterval = setInterval((function(_this) {
       return function() {
@@ -368,8 +378,11 @@ SpotifyUI = (function() {
 
   SpotifyUI.prototype.onResize = function() {
     var height;
-    height = this.elements.tab.find('.video-wrapper').innerHeight();
-    return this.elements.tab.find('.video-wrapper').css({
+    if (!this.elements.wrapper) {
+      return;
+    }
+    height = this.elements.wrapper.innerHeight();
+    return this.elements.wrapper.css({
       top: $(window).height() / 2 - height / 2
     });
   };
@@ -382,7 +395,8 @@ SpotifyUI = (function() {
   SpotifyUI.prototype.loadExtraResources = function() {
     $('head').append('<link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">');
     return chrome.extension.sendRequest({
-      cmd: 'read_script'
+      method: 'getScript',
+      file: 'youtube'
     }, function(js) {
       if (!window.YTConfig) {
         window.YTConfig = {
@@ -400,15 +414,18 @@ SpotifyUI = (function() {
   };
 
   SpotifyUI.prototype.createWatchTab = function() {
-    var tabHTML;
+    var request, tabHTML;
     tabHTML = "<div id=\"section-watch\" class=\"stacked hidden\"></div>";
     this.elements.tab = $(tabHTML).insertAfter($('#section-follow'));
-    return chrome.extension.sendRequest({
-      cmd: 'read_file'
-    }, (function(_this) {
+    request = {
+      method: 'getView',
+      file: 'tab'
+    };
+    return chrome.extension.sendRequest(request, (function(_this) {
       return function(html) {
         _this.elements.tab.html(html);
         _this.elements.throbber = _this.elements.tab.find('.throbber');
+        _this.elements.wrapper = _this.elements.tab.find('.video-wrapper');
         return _this.showLoadingOverlay();
       };
     })(this));
