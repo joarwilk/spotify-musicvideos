@@ -57,7 +57,7 @@ class Player
         @player.loadVideoById(video.id.videoId, 0, 'maxres')
         @player.setPlaybackQuality('highres')
         #@player.mute()
-        @player.seekTo(1, true);
+        @player.seekTo(1, true)
 
         clearInterval YTPlayerLoadInterval
       , 250
@@ -90,7 +90,7 @@ class Player
 
   seek: (position) =>
     console.log 'seeking to', position / 1000
-    @player.seekTo(position / 1000 + 2, true);
+    #@player.seekTo(position / 1000 + 2, true);
 
   onPlayState: (shouldPlay) =>
     if shouldPlay then @player.playVideo() else @player.pauseVideo()

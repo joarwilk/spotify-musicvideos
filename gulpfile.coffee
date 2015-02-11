@@ -1,13 +1,10 @@
 gulp = require 'gulp'
 gutil = require 'gulp-util'
 stylus = require 'gulp-stylus'
-imagemin = require 'gulp-imagemin'
 coffeelint = require 'gulp-coffeelint'
 coffee = require 'gulp-coffee'
-notify = require 'gulp-notify'
 concat = require 'gulp-concat'
 uglify = require 'gulp-uglify'
-cache = require 'gulp-cache'
 clean = require 'gulp-clean'
 gulp = require 'gulp'
 taskListing = require 'gulp-task-listing'
@@ -45,11 +42,13 @@ gulp.task 'lint', ->
   .pipe(coffeelint.reporter())
 
 gulp.task 'src', ->
+  gulp.src('app/scripts/vendor/*.js')
+  .pipe(gulp.dest('dist/js/vendor'))
   gulp.src('app/scripts/*.js')
   .pipe(gulp.dest(destinations.js))
   gulp.src(sources.scripts)
   .pipe(coffee({bare: true}).on('error', gutil.log))
-  #.pipe(concat('app.js'))
+  .pipe(concat('app.js'))
   #.pipe(uglify())
   .pipe(gulp.dest(destinations.js))
 

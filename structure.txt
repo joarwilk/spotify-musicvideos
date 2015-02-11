@@ -30,7 +30,7 @@ VideoUI
 - Does video overlays like trackname/artist
 - Handles video transitions and loading screens
 
-Remote
+RemoteInterface
 - Has its own cache
 - Queries remote server for video data
 Sends: track name and song

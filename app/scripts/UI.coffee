@@ -1,4 +1,6 @@
+###
 define ->
   class UI
 
     constructor: () ->
+###

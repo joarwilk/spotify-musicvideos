@@ -1,3 +1,12 @@
+
+/*
+define ->
+  class UI
+
+    constructor: () ->
+ */
+
+
 var Player,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
@@ -73,7 +82,7 @@ Player = (function() {
         return interval = setInterval(function() {
           var query;
           clearInterval(interval);
-          query = "" + track.name + " " + track.artist + " official";
+          query = track.name + " " + track.artist + " official";
           return $.getJSON("https://api.soundcloud.com/tracks.json?q=" + query + "&client_id=b45b1aa10f1ac2941910a7f0d10f8e28&app_version=9dc8303", function(items) {
             var diff, i, item, params, _i, _len, _results;
             _results = [];
@@ -107,8 +116,7 @@ Player = (function() {
   };
 
   Player.prototype.seek = function(position) {
-    console.log('seeking to', position / 1000);
-    return this.player.seekTo(position / 1000 + 2, true);
+    return console.log('seeking to', position / 1000);
   };
 
   Player.prototype.onPlayState = function(shouldPlay) {
@@ -396,7 +404,7 @@ SpotifyUI = (function() {
     $('head').append('<link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">');
     return chrome.extension.sendRequest({
       method: 'getScript',
-      file: 'youtube'
+      file: 'vendor/youtube'
     }, function(js) {
       if (!window.YTConfig) {
         window.YTConfig = {

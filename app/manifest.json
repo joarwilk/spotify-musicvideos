@@ -13,7 +13,7 @@
     {
       "matches": ["*://play.spotify.com/*"],
       "css": ["css/main.css"],
-      "js": ["js/vendor/jquery.js", "js/vendor/require", "js/app.js"]
+      "js": ["js/vendor/jquery.js", "js/vendor/require.js", "js/app.js"]
     }
   ],
   "web_accessible_resources": [

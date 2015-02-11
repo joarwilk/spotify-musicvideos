@@ -1,9 +1,10 @@
 chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
+    console.log(request)
     switch (request.method) {
         case 'getView':
             if (request.file) {
                 $.ajax({
-                    url: chrome.extension.getURL('views/' + file + '.html'),
+                    url: chrome.extension.getURL('views/' + request.file + '.html'),
                     dataType: 'html',
                     success: sendResponse
                 });
@@ -12,7 +13,7 @@ chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
         case 'getScript':
             if (request.file) {
                 $.ajax({
-                    url: chrome.extension.getURL('js/' + file + '.js'),
+                    url: chrome.extension.getURL('js/' + request.file + '.js'),
                     dataType: 'text',
                     success: sendResponse
                 });
