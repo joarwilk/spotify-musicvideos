@@ -63,6 +63,7 @@ gulp.task 'watch', ->
   gulp.watch sources.images, ['images']
   gulp.watch sources.styles, ['style']
   gulp.watch sources.scripts, ['lint', 'src']
+  gulp.watch 'app/scripts/vendor/*.js', ['lint', 'src']
   gulp.watch sources.html, ['views']
 
 gulp.task 'clean', ->

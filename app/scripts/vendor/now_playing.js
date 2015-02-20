@@ -4096,6 +4096,7 @@
           throw dataAndEvents;
         }
         m.update(attributes);
+        console.info('populari', attributes, m)
       });
     }
     /**
@@ -4127,6 +4128,8 @@
           /** @type {boolean} */
           opts._hasTracks = true;
         }
+
+        console.info('snapshot', results, src, newlines, opts)
       });
     }
     /**
@@ -4143,6 +4146,7 @@
           uri : args.uri,
           type : "list"
         };
+        console.info('snapshot', this, a, b, args)
         debug("playlist_tracks_snapshot", [options, f, ui, false], function(dataAndEvents, str) {
           if (dataAndEvents) {
             throw dataAndEvents;
@@ -4222,6 +4226,7 @@
         delete options.dateAdded;
         delete options.addedBy;
       }
+      console.info('construct', config, params, assigns, options)
       return{
         tracks : params,
         rows : assigns
@@ -4295,6 +4300,7 @@
         /** @type {boolean} */
         data.unavailable = true;
       }
+      console.info('init', data)
     }
     /**
      * @param {Object} options
@@ -4379,6 +4385,7 @@
       if ($element) {
         run(file);
       }
+      console.info('resume', file, this)
     }
     /**
      * @param {Object} delta
@@ -10476,6 +10483,7 @@
      * @return {?}
      */
     var request = function(options, callback, data, fn) {
+
       /**
        * @return {undefined}
        */
@@ -11633,6 +11641,7 @@
       var content;
       var i;
       var len;
+      console.info(data)
       switch(data.type) {
         case self.Type.ALBUM:
           return content = [self.Type.ALBUM, few], data.disc && content.push(data.disc), content;
@@ -11766,6 +11775,7 @@
         return parts.slice(i).join(comma);
       };
       var la = decodeURIComponent();
+          console.info('la', la)
       switch(la) {
         case self.Type.ALBUM:
           return self.albumURI(decode(), parseInt(decodeURIComponent(), 10));
@@ -11816,6 +11826,7 @@
             return self.facebookURI(parseInt(key, 10));
           }
           if (null != key) {
+            var b = (function() {
             switch(key) {
               case self.Type.PLAYLIST:
                 return self.playlistURI(opt_e, decode());
@@ -11853,6 +11864,9 @@
               case self.Type.LIBRARY:
                 return self.libraryURI(opt_e, decodeURIComponent());
             }
+            })()
+            console.log(b)
+            return b;
           }
           var target = consume();
           return null != key && target.length > 0 ? self.profileURI(opt_e, [key].concat(target)) : null != key ? self.profileURI(opt_e, [key]) : self.profileURI(opt_e);
@@ -16437,6 +16451,7 @@
       this.play_origin = new callback(options.play_origin);
       this.next_page_url = options.next_page_url;
       this.prev_page_url = options.prev_page_url;
+      console.info('tracks', this.tracks)
     }
     /**
      * @param {Object} details
@@ -17642,6 +17657,7 @@
       this.play_origin = new callback(options.play_origin);
       this.next_page_url = options.next_page_url;
       this.prev_page_url = options.prev_page_url;
+      console.info('OPTIONS', options)
     }
     /**
      * @param {Object} details

@@ -42,7 +42,8 @@ chrome.webRequest.onBeforeRequest.addListener(
     ["blocking"]
 );
 
-var nowPlaying = chrome.extension.getURL('js/vendor/spotify/now_playing.js')
+var nowPlaying = chrome.extension.getURL('js/vendor/now_playing.js')
+console.log(nowPlaying)
 chrome.webRequest.onBeforeRequest.addListener(
     function(details) {
         return { redirectUrl: nowPlaying };
