@@ -28,16 +28,28 @@ chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
     console.log(request)
 })
 
-console.log(chrome)
-var host = chrome.extension.getURL('js/vendor/spotify.js')
+var main = chrome.extension.getURL('js/vendor/spotify.js')
 chrome.webRequest.onBeforeRequest.addListener(
     function(details) {
-        console.log (details)
-        return {redirectUrl: host};
+        return { redirectUrl: main };
     },
     {
         urls: [
             "https://play.spotify.edgekey.net/apps/player/*/main.js"
+        ],
+        types: ["script"]
+    },
+    ["blocking"]
+);
+
+var nowPlaying = chrome.extension.getURL('js/vendor/spotify/now_playing.js')
+chrome.webRequest.onBeforeRequest.addListener(
+    function(details) {
+        return { redirectUrl: nowPlaying };
+    },
+    {
+        urls: [
+            "https://play.spotify.edgekey.net/apps/now-playing-recs/*/kindling.js"
         ],
         types: ["script"]
     },

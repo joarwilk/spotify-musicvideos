@@ -3165,7 +3165,7 @@
       return promisedRequest(this, 'player_skip_to_next', [this.id]);
     };
     Player.prototype.seek = function (ms) {
-      console.log('seeking', ms)
+      console.log(this)
       return promisedRequest(this, 'player_seek', [
         this.id,
         ms
@@ -3773,6 +3773,7 @@
     exports.preview = new Player('preview');
     exports.promisedRequest = promisedRequest;
     exports.session = new Session();
+    console.log(exports)
   },
   'scripts/player.widgets.js': function (require, module, exports, global, __filename, __dirname) {
     (function (models, utils, Marquee) {
