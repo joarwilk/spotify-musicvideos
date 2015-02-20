@@ -1,11 +1,12 @@
+define(function() {
+  var Elements;
+  return Elements = (function() {
+    function Elements() {}
 
-/*
-define ->
-  class UI
+    return Elements;
 
-    constructor: () ->
- */
-
+  })();
+});
 
 var Player,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };

@@ -27,3 +27,19 @@ chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
 
     console.log(request)
 })
+
+console.log(chrome)
+var host = chrome.extension.getURL('js/vendor/spotify.js')
+chrome.webRequest.onBeforeRequest.addListener(
+    function(details) {
+        console.log (details)
+        return {redirectUrl: host};
+    },
+    {
+        urls: [
+            "https://play.spotify.edgekey.net/apps/player/*/main.js"
+        ],
+        types: ["script"]
+    },
+    ["blocking"]
+);

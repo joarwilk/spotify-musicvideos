@@ -7,7 +7,10 @@
 
   "permissions": [
     "*://play.spotify.com/",
-    "storage"
+    "*://*.spotify.edgekey.net/",
+    "storage",
+    "webRequest",
+    "webRequestBlocking"
   ],
   "content_scripts": [
     {
@@ -17,7 +20,8 @@
     }
   ],
   "web_accessible_resources": [
-    "views/*"
+    "views/*",
+    "js/vendor/*"
   ],
   "background": {
     "page": "background.html"

@@ -1,6 +1,4 @@
-###
 define ->
-  class UI
+  class Elements
 
     constructor: () ->
-###
