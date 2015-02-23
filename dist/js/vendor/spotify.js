@@ -3117,22 +3117,6 @@
       ]);
     };
     Player.prototype.play = function () {
-      var live = require('node_modules/spotify-live/index.js');
-      live('spotify:application').update({ arguments: 'random:' + Math.random() });
-      SP.request('player_future_snapshot', ['main'], null, function (data) {
-        if (callback)
-          callback(null, data);
-      }, function (data) {
-        var _args = JSON.stringify(args);
-        var debug = ' (bridge message: \'' + name + '\', args: ' + _args + ')';
-        var msg = data.message + debug;
-        var error = new Error(msg);
-        error.name = data.error;
-        if (callback)
-          callback(error);
-      });
-
-
       return promisedRequest(this, 'player_play', [this.id]);
     };
     Player.prototype.pause = function () {
@@ -3181,6 +3165,19 @@
       return promisedRequest(this, 'player_skip_to_next', [this.id]);
     };
     Player.prototype.seek = function (ms) {
+
+      var live = require('node_modules/spotify-live/index.js');
+      live('spotify:application').update({ arguments: 'random:' + Math.random() });
+      SP.request('player_future_snapshot', ['main'], null, function (data) {
+        if (callback)
+          callback(null, data);
+      }, function (data) {
+        var msg = data.message ;
+        var error = new Error(msg);
+        error.name = data.error;
+        if (callback)
+          callback(error);
+      });
 
       return promisedRequest(this, 'player_seek', [
         this.id,
@@ -3260,7 +3257,6 @@
         Playlist._cache.cache(result.uri, playlist);
         playlist.resolve('name', name);
         promise.setDone(playlist);
-        console.info('playlist', this)
       };
       SP.request('playlist_create', [name], promise, done, promise.setFail);
       return promise;

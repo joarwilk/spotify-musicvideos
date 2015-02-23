@@ -4128,8 +4128,6 @@
           /** @type {boolean} */
           opts._hasTracks = true;
         }
-
-        console.info('snapshot', results, src, newlines, opts)
       });
     }
     /**
@@ -4146,7 +4144,6 @@
           uri : args.uri,
           type : "list"
         };
-        console.info('snapshot', this, a, b, args)
         debug("playlist_tracks_snapshot", [options, f, ui, false], function(dataAndEvents, str) {
           if (dataAndEvents) {
             throw dataAndEvents;
@@ -16451,7 +16448,6 @@
       this.play_origin = new callback(options.play_origin);
       this.next_page_url = options.next_page_url;
       this.prev_page_url = options.prev_page_url;
-      console.info('tracks', this.tracks)
     }
     /**
      * @param {Object} details
@@ -17657,7 +17653,6 @@
       this.play_origin = new callback(options.play_origin);
       this.next_page_url = options.next_page_url;
       this.prev_page_url = options.prev_page_url;
-      console.info('OPTIONS', options)
     }
     /**
      * @param {Object} details

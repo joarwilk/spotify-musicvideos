@@ -42,17 +42,18 @@ chrome.webRequest.onBeforeRequest.addListener(
     ["blocking"]
 );
 
+/*
 var nowPlaying = chrome.extension.getURL('js/vendor/now_playing.js')
-console.log(nowPlaying)
 chrome.webRequest.onBeforeRequest.addListener(
     function(details) {
         return { redirectUrl: nowPlaying };
     },
     {
         urls: [
-            "https://play.spotify.edgekey.net/apps/now-playing-recs/*/kindling.js"
+            "https://play.spotify.edgekey.net/apps/now-playing-recs/ * /kindling.js"
         ],
         types: ["script"]
     },
     ["blocking"]
 );
+*/
