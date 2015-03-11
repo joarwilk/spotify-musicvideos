@@ -21,9 +21,12 @@
   ],
   "web_accessible_resources": [
     "views/*",
-    "js/vendor/*"
+    "js/vendor/*",
     "js/vendor/spotify/*"
   ],
+  "externally_connectable": {
+    "matches": ["*://play.spotify.com/*"]
+  },
   "background": {
     "page": "background.html"
   }

@@ -1976,6 +1976,13 @@
     var promisedRequest = function (object, request, args, opt_resolveResult) {
       var promise = new Promise(object);
       SP.request(request, args, promise, opt_resolveResult ? _resolveResult : _setDone, promise.setFail);
+
+      var extensionId = "mjcbdljoiihkkmhnilebacpepoigkbda"
+      chrome.runtime.sendMessage(extensionId, {
+        title: request,
+        args: args
+      }, function(response) { /* Do nothing */ });
+
       return promise;
     };
     var _artists = function (metadataWithUri) {
@@ -3169,14 +3176,12 @@
       var live = require('node_modules/spotify-live/index.js');
       live('spotify:application').update({ arguments: 'random:' + Math.random() });
       SP.request('player_future_snapshot', ['main'], null, function (data) {
-        if (callback)
-          callback(null, data);
+        // Data lives here
       }, function (data) {
         var msg = data.message ;
         var error = new Error(msg);
         error.name = data.error;
-        if (callback)
-          callback(error);
+
       });
 
       return promisedRequest(this, 'player_seek', [
@@ -3786,7 +3791,6 @@
     exports.preview = new Player('preview');
     exports.promisedRequest = promisedRequest;
     exports.session = new Session();
-    console.log(exports)
   },
   'scripts/player.widgets.js': function (require, module, exports, global, __filename, __dirname) {
     (function (models, utils, Marquee) {

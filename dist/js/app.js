@@ -504,6 +504,14 @@ if (window.location.pathname === '/watch') {
   ui.doBinds();
   ui.loadExtraResources();
   loadImmediately = window.location.hash === '#watch';
+  chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+    var event;
+    console.info("Dispatching ", request.title);
+    event = new CustomEvent(request.title, {
+      detail: request
+    });
+    return document.dispatchEvent(event);
+  });
   $(document).ready(function() {
     ui.attachMenuItem();
     ui.createWatchTab();

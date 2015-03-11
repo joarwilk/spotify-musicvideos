@@ -19,14 +19,28 @@ chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
                 });
             }
         break;
+        case 'event':
+            console.info('Recieved event', request)
+        break;
         default:
             console.error('Invalid method')
         break
 
     }
-
-    console.log(request)
 })
+
+chrome.runtime.onMessageExternal.addListener(
+  function(request, sender, sendResponse) {
+
+    console.info("Recieved external message", request)
+      chrome.tabs.sendMessage(sender.tab.id, {
+        method: 'event',
+        title: request.title,
+        args: request.args
+      }, function(response) {
+        console.log("Response:", response);
+      });
+  });
 
 var main = chrome.extension.getURL('js/vendor/spotify.js')
 chrome.webRequest.onBeforeRequest.addListener(
