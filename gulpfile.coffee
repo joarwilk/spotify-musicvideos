@@ -10,10 +10,14 @@ gulp = require 'gulp'
 taskListing = require 'gulp-task-listing'
 runSequence = require 'run-sequence'
 
+mocha = require('gulp-mocha');
+
 sources =
   styles: './app/**/*.styl'
   html: ['./app/*.html', './app/**/*.html', 'app/manifest.json']
   scripts: ['./app/**/!(main)*.coffee', './app/**/main.coffee']
+  vendor: './app/scripts/vendor/*.js'
+  js: './app/scripts/*.js'
   images: ['./app/**/*.jpg', './app/**/*.png']
 
 destinations =
@@ -22,6 +26,10 @@ destinations =
   js: 'dist/js'
 
 gulp.task('help', taskListing);
+
+gulp.task 'test', ->
+  gulp.src('test/test.js', {read: false})
+  .pipe(mocha({reporter: 'nyan'}));
 
 
 gulp.task 'style', ->
@@ -42,9 +50,9 @@ gulp.task 'lint', ->
   .pipe(coffeelint.reporter())
 
 gulp.task 'src', ->
-  gulp.src('app/scripts/vendor/*.js')
+  gulp.src(sources.vendor)
   .pipe(gulp.dest('dist/js/vendor'))
-  gulp.src('app/scripts/*.js')
+  gulp.src(sources.js)
   .pipe(gulp.dest(destinations.js))
   gulp.src(sources.scripts)
   .pipe(coffee({bare: true}).on('error', gutil.log))
@@ -63,7 +71,8 @@ gulp.task 'watch', ->
   gulp.watch sources.images, ['images']
   gulp.watch sources.styles, ['style']
   gulp.watch sources.scripts, ['lint', 'src']
-  gulp.watch 'app/scripts/vendor/*.js', ['lint', 'src']
+  gulp.watch sources.js, ['lint', 'src']
+  gulp.watch sources.vendor, ['lint', 'src']
   gulp.watch sources.html, ['views']
 
 gulp.task 'clean', ->

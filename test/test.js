@@ -1,0 +1,1 @@
+// Chrome extension testing is unstable
