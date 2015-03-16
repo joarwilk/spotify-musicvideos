@@ -7,6 +7,8 @@ do ->
   ui.doBinds()
   ui.loadExtraResources()
 
+  appUI = new AppUI()
+
   manager = new PlayerManager()
 
   # Check if the user requested /watch
@@ -32,6 +34,8 @@ do ->
     setTimeout () ->
       manager.setActive true
     , 500
+
+    manager.onVideoChanged appUI.onVideoChange
 
     spotify.onUserNavigated (path) ->
       if path isnt '/watch'

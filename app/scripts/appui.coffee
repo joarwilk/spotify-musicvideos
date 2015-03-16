@@ -13,8 +13,9 @@ class AppUI
     $('#popup-artist').html(track.artistName)
 
   onVideoChange: (video) ->
-    $('#video-title').html(video.title)
-    $('#channel-name').html(video.channel)
+    console.info 'videochange', video
+    $('#video-title').html(video.snippet.title)
+    $('#channel-name').html(video.snippet.channelTitle)
 
   showTrackBubble: () ->
 

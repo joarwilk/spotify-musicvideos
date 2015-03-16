@@ -10,16 +10,16 @@ class PreloadPlayer extends Player
   constructor: (elementID, track) ->
     super(elementID, track)
 
-    @element.hide()
+    #@element.hide()
 
   doBinds: () ->
-    document.addEventListener 'player_set_volume', (e) -> @setVolume args[1]
+    document.addEventListener 'player_set_volume', (e) -> @setVolume e.detail[1]
+
+    @YT.addEventListener 'onStateChange', @onStateChange
 
   loadVideo: (id) ->
     super(id)
 
-    console.info ('loadvideo')
-
-  onStateChange: (state) ->
-    if state == YT_STATE_PLAYING
+  onStateChange: (state) =>
+    if state.data == YT_STATE_PLAYING
       @YT.pauseVideo()

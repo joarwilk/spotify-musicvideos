@@ -3,6 +3,9 @@ class PlayerManager
   CROSSFADE_STEP_SIZE = 25
 
   constructor: () ->
+    @callbacks =
+      onVideoChanged: []
+
     @YTAPILoaded = false
 
     @players = {
@@ -40,20 +43,26 @@ class PlayerManager
       document.removeEventListener 'player_track_change', @onTrack
 
   preloadTrack: (track) =>
-    @getVideoIdFromTrack track, (id) =>
+    @getVideoFromTrack track, (video) =>
       @players.next = new PreloadPlayer('preload-player', track)
-      @players.next.loadVideo id
+      @players.next.loadVideo video.id.videoId
 
   onTrack: (event) =>
+    id = 0
+
+    console.info 'track', event
+
     # If we've preloaded this track, swap it into the "current" slot
     if @players.next and @players.next.track._pid == event.detail[0]._pid
-      @getVideoIdFromTrack track, (id) =>
-        @players.current = new Player('primary-player', event.detail[0], @players.next)
-        @players.current.loadVideo id
+      @players.current = new Player('primary-player', event.detail[0], @players.next)
     else
-      @getVideoIdFromTrack track, (id) =>
-        @players.current = new Player('primary-player', event.detail[0])
-        @players.current.loadVideo id
+      @players.current = new Player('primary-player', event.detail[0])
+
+      @getVideoFromTrack event.detail[0], (video) =>
+        @players.current.loadVideo video.id.videoId
+
+        for callback in @callbacks.onVideoChanged
+            callback video
 
     @preloadTrack event.detail[1]
 
@@ -78,11 +87,14 @@ class PlayerManager
 
     , CROSSFADE_STEP_SIZE
 
-  getVideoIdFromTrack: (track, callback) ->
+  onVideoChanged: (callback) ->
+    @callbacks.onVideoChanged.push callback
+
+  getVideoFromTrack: (track, callback) ->
     params =
       part: 'id,snippet'
       q: "#{track.name} #{track.artistName} offical video"
       key: 'AIzaSyD3ufUdOQMxYEWv0yLVvPnvuqSpSLTLfPU'
 
-    $.getJSON 'https://content.googleapis.com/youtube/v3/search', params, (data) ->
-      callback(data.items[0].id.videoId)
+    return $.getJSON 'https://content.googleapis.com/youtube/v3/search', params, (data) ->
+      callback(data.items[0])

@@ -20,9 +20,26 @@
   position: relative;
 }
 #section-watch .video-wrapper iframe {
-  width: 100%;
-  height: 100%;
+  width: 50%;
+  height: 50%;
   position: absolute;
   top: 0;
+  right: 0;
+}
+#section-watch .video-wrapper iframe:first-of-type {
   left: 0;
+  right: auto;
+}
+#primary-player {
+  width: 45%;
+  height: 200px;
+  display: inline-block;
+}
+#secondary-player {
+  width: 45%;
+  height: 200px;
+  display: inline-block;
+}
+.track-popup {
+  display: none;
 }

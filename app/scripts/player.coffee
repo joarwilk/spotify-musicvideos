@@ -10,31 +10,40 @@ class Player
   constructor: (elementID, track, otherPlayer) ->
     # We're creating this player from another one
     # e.g. a preloadPlayer that has been transitioned in
+
     if otherPlayer instanceof Player
       @YT = otherPlayer.YT
     else
-      @YT = new window.YT.Player elementID, {
-        videoId: ''
-        playerVars:
-          autoplay: 1
-          controls: 1 # Should be 0
-          rel : 0
-          disablekb: 1 # Disable Keyboard
-          iv_load_policy: 3 # Disable annotations
-          modestbranding : 1 # Hide some ui items
-          hd: 1 # Highest Quality
-          showinfo: 0 # Hide video information
-      }
+      # If the element is an iframe, the player has
+      # already been loaded
+      if $('#' + elementID).is 'iframe'
+        @YT = new YT.Player elementID
+        @doBinds()
+      else
+        @YT = new YT.Player elementID, {
+          videoId: ''
+          playerVars:
+            autoplay: 0
+            controls: 1 # Should be 0
+            rel : 0
+            disablekb: 1 # Disable Keyboard
+            iv_load_policy: 3 # Disable annotations
+            modestbranding : 1 # Hide some ui items
+            hd: 1 # Highest Quality
+            showinfo: 0 # Hide video information
+        }
 
-      playerLoadInterval = setInterval () =>
-        if @YT.loadVideoById?
-          clearInterval playerLoadInterval
-          @playerIsReady = true
+        playerLoadInterval = setInterval () =>
+          if @YT.loadVideoById?
+            clearInterval playerLoadInterval
+            @playerIsReady = true
 
-          if @cuedVideoId
-            @loadVideo @cuedVideoId
-            @cuedVideoId = 0
-      , 300
+            @doBinds()
+
+            if @cuedVideoId
+              @loadVideo @cuedVideoId
+              @cuedVideoId = 0
+        , 200
 
     @cuedVideoId = 0
 
@@ -42,13 +51,12 @@ class Player
     @APILoaded = false
     @track = track
 
-    @doBinds()
 
   doBinds: () ->
     document.addEventListener 'player_seek', (e) -> @seekTo e.detail[0]
     document.addEventListener 'player_set_volume', (e) -> @setVolume e.detail[1]
 
-    #@YT.addEventListener 'onStateChange', @onStateChange
+    @YT.addEventListener 'onStateChange', @onStateChange
 
   onAPILoad: () ->
     @APILoaded = true
@@ -63,6 +71,8 @@ class Player
 
   seekTo: (time) ->
 
+  setVolume: (volume) =>
+    @YT.setVolume volume
 
   onStateChange: (state) ->
     ###switch state:
