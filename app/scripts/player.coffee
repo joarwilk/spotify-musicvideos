@@ -7,43 +7,38 @@ class Player
   YT_STATE_BUFFERING = 3
   YT_STATE_CUED = 5
 
-  constructor: (elementID, track, otherPlayer) ->
-    # We're creating this player from another one
-    # e.g. a preloadPlayer that has been transitioned in
+  @playerID = 0
 
-    if otherPlayer instanceof Player
-      @YT = otherPlayer.YT
-    else
-      # If the element is an iframe, the player has
-      # already been loaded
-      if $('#' + elementID).is 'iframe'
-        @YT = new YT.Player elementID
+  constructor: (track, isNext) ->
+
+    id = @playerID++
+
+    $('.video-wrapper').append('<div id="player-' + id + '"></div>')
+
+    @YT = new YT.Player "player-#{id}", {
+      videoId: ''
+      playerVars:
+        autoplay: 0
+        controls: 1 # Should be 0
+        rel : 0
+        disablekb: 1 # Disable Keyboard
+        iv_load_policy: 3 # Disable annotations
+        modestbranding : 1 # Hide some ui items
+        hd: 1 # Highest Quality
+        showinfo: 0 # Hide video information
+    }
+
+    playerLoadInterval = setInterval () =>
+      if @YT.loadVideoById?
+        clearInterval playerLoadInterval
+        @playerIsReady = true
+
         @doBinds()
-      else
-        @YT = new YT.Player elementID, {
-          videoId: ''
-          playerVars:
-            autoplay: 0
-            controls: 1 # Should be 0
-            rel : 0
-            disablekb: 1 # Disable Keyboard
-            iv_load_policy: 3 # Disable annotations
-            modestbranding : 1 # Hide some ui items
-            hd: 1 # Highest Quality
-            showinfo: 0 # Hide video information
-        }
 
-        playerLoadInterval = setInterval () =>
-          if @YT.loadVideoById?
-            clearInterval playerLoadInterval
-            @playerIsReady = true
-
-            @doBinds()
-
-            if @cuedVideoId
-              @loadVideo @cuedVideoId
-              @cuedVideoId = 0
-        , 200
+        if @cuedVideoId
+          @loadVideo @cuedVideoId
+          @cuedVideoId = 0
+    , 200
 
     @cuedVideoId = 0
 
@@ -53,8 +48,8 @@ class Player
 
 
   doBinds: () ->
-    document.addEventListener 'player_seek', (e) -> @seekTo e.detail[0]
-    document.addEventListener 'player_set_volume', (e) -> @setVolume e.detail[1]
+    document.addEventListener 'player_seek', (e) => @seekTo e.detail[0]
+    document.addEventListener 'player_set_volume', (e) => @setVolume e.detail[1] * 100
 
     @YT.addEventListener 'onStateChange', @onStateChange
 
@@ -70,6 +65,8 @@ class Player
       @cuedVideoId = id
 
   seekTo: (time) ->
+    console.info 'seek', time
+    @YT.seekTo time, true
 
   setVolume: (volume) =>
     @YT.setVolume volume
@@ -80,6 +77,8 @@ class Player
 
       break
     ###
+
+  makeCurrent: () ->
 
   onVideoLoaded: () ->
 

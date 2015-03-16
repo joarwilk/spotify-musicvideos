@@ -12,8 +12,7 @@ AppUI = (function() {
     return $('#popup-artist').html(track.artistName);
   };
 
-  AppUI.prototype.onVideoChange = function(video) {
-    console.info('videochange', video);
+  AppUI.prototype.onVideoChanged = function(video) {
     $('#video-title').html(video.snippet.title);
     return $('#channel-name').html(video.snippet.channelTitle);
   };
@@ -69,44 +68,39 @@ Player = (function() {
 
   YT_STATE_CUED = 5;
 
-  function Player(elementID, track, otherPlayer) {
+  Player.playerID = 0;
+
+  function Player(track, isNext) {
     this.setVolume = __bind(this.setVolume, this);
-    var playerLoadInterval;
-    if (otherPlayer instanceof Player) {
-      this.YT = otherPlayer.YT;
-    } else {
-      if ($('#' + elementID).is('iframe')) {
-        this.YT = new YT.Player(elementID);
-        this.doBinds();
-      } else {
-        this.YT = new YT.Player(elementID, {
-          videoId: '',
-          playerVars: {
-            autoplay: 0,
-            controls: 1,
-            rel: 0,
-            disablekb: 1,
-            iv_load_policy: 3,
-            modestbranding: 1,
-            hd: 1,
-            showinfo: 0
-          }
-        });
-        playerLoadInterval = setInterval((function(_this) {
-          return function() {
-            if (_this.YT.loadVideoById != null) {
-              clearInterval(playerLoadInterval);
-              _this.playerIsReady = true;
-              _this.doBinds();
-              if (_this.cuedVideoId) {
-                _this.loadVideo(_this.cuedVideoId);
-                return _this.cuedVideoId = 0;
-              }
-            }
-          };
-        })(this), 200);
+    var id, playerLoadInterval;
+    id = this.playerID++;
+    $('.video-wrapper').append('<div id="player-' + id + '"></div>');
+    this.YT = new YT.Player("player-" + id, {
+      videoId: '',
+      playerVars: {
+        autoplay: 0,
+        controls: 1,
+        rel: 0,
+        disablekb: 1,
+        iv_load_policy: 3,
+        modestbranding: 1,
+        hd: 1,
+        showinfo: 0
       }
-    }
+    });
+    playerLoadInterval = setInterval((function(_this) {
+      return function() {
+        if (_this.YT.loadVideoById != null) {
+          clearInterval(playerLoadInterval);
+          _this.playerIsReady = true;
+          _this.doBinds();
+          if (_this.cuedVideoId) {
+            _this.loadVideo(_this.cuedVideoId);
+            return _this.cuedVideoId = 0;
+          }
+        }
+      };
+    })(this), 200);
     this.cuedVideoId = 0;
     this.element = $('#' + elementID);
     this.APILoaded = false;
@@ -114,12 +108,16 @@ Player = (function() {
   }
 
   Player.prototype.doBinds = function() {
-    document.addEventListener('player_seek', function(e) {
-      return this.seekTo(e.detail[0]);
-    });
-    document.addEventListener('player_set_volume', function(e) {
-      return this.setVolume(e.detail[1]);
-    });
+    document.addEventListener('player_seek', (function(_this) {
+      return function(e) {
+        return _this.seekTo(e.detail[0]);
+      };
+    })(this));
+    document.addEventListener('player_set_volume', (function(_this) {
+      return function(e) {
+        return _this.setVolume(e.detail[1] * 100);
+      };
+    })(this));
     return this.YT.addEventListener('onStateChange', this.onStateChange);
   };
 
@@ -137,7 +135,10 @@ Player = (function() {
     }
   };
 
-  Player.prototype.seekTo = function(time) {};
+  Player.prototype.seekTo = function(time) {
+    console.info('seek', time);
+    return this.YT.seekTo(time, true);
+  };
 
   Player.prototype.setVolume = function(volume) {
     return this.YT.setVolume(volume);
@@ -151,6 +152,8 @@ Player = (function() {
       break
      */
   };
+
+  Player.prototype.makeCurrent = function() {};
 
   Player.prototype.onVideoLoaded = function() {};
 
@@ -178,6 +181,7 @@ PlayerManager = (function() {
       onVideoChanged: []
     };
     this.YTAPILoaded = false;
+    this.crossfadeShouldStop = false;
     this.players = {
       current: null,
       next: null
@@ -209,6 +213,7 @@ PlayerManager = (function() {
   }
 
   PlayerManager.prototype.setActive = function(isActive) {
+    console.info(isActive, 'is active');
     if (isActive) {
       document.addEventListener('player_track_change', this.onTrack);
       return this.onTrack({
@@ -229,21 +234,22 @@ PlayerManager = (function() {
   };
 
   PlayerManager.prototype.onTrack = function(event) {
-    var id;
+    var id, _ref;
     id = 0;
-    console.info('track', event);
+    console.info('track', (_ref = this.players.next) != null ? _ref.track._pid : void 0, event.detail[0]._pid);
     if (this.players.next && this.players.next.track._pid === event.detail[0]._pid) {
-      this.players.current = new Player('primary-player', event.detail[0], this.players.next);
+      this.players.current = this.players.next;
+      this.players.current.makeCurrent();
+      this.stopCrossfade();
     } else {
-      this.players.current = new Player('primary-player', event.detail[0]);
       this.getVideoFromTrack(event.detail[0], (function(_this) {
         return function(video) {
-          var callback, _i, _len, _ref, _results;
+          var callback, _i, _len, _ref1, _results;
           _this.players.current.loadVideo(video.id.videoId);
-          _ref = _this.callbacks.onVideoChanged;
+          _ref1 = _this.callbacks.onVideoChanged;
           _results = [];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            callback = _ref[_i];
+          for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+            callback = _ref1[_i];
             _results.push(callback(video));
           }
           return _results;
@@ -257,18 +263,29 @@ PlayerManager = (function() {
     var interval, step;
     this.players.current.element.fadeOut(duration);
     this.players.next.element.fadeIn(duration);
+    this.players.next.isCrossfading = true;
     step = 0;
-    return interval = setInterval(function() {
-      var progress;
-      progress = (step++ * CROSSFADE_STEP_SIZE) / duration;
-      if (progress >= 1) {
-        clearInterval(interval);
-        return onFinished();
-      } else {
-        current.setVolume((1 - progress) * current.getVolume());
-        return next.setVolume(progress.current.getVolume());
-      }
-    }, CROSSFADE_STEP_SIZE);
+    return interval = setInterval((function(_this) {
+      return function() {
+        var progress;
+        if (_this.crossfadeShouldStop) {
+          clearInterval(interval);
+          return;
+        }
+        progress = (step++ * CROSSFADE_STEP_SIZE) / duration;
+        if (progress >= 1) {
+          clearInterval(interval);
+          return onFinished();
+        } else {
+          current.setVolume((1 - progress) * current.getVolume());
+          return next.setVolume(progress.current.getVolume());
+        }
+      };
+    })(this), CROSSFADE_STEP_SIZE);
+  };
+
+  PlayerManager.prototype.stopCrossfade = function() {
+    return this.crossfadeShouldStop = true;
   };
 
   PlayerManager.prototype.onVideoChanged = function(callback) {
@@ -316,12 +333,15 @@ PreloadPlayer = (function(_super) {
   function PreloadPlayer(elementID, track) {
     this.onStateChange = __bind(this.onStateChange, this);
     PreloadPlayer.__super__.constructor.call(this, elementID, track);
+    this.isCrossfading = false;
   }
 
   PreloadPlayer.prototype.doBinds = function() {
-    document.addEventListener('player_set_volume', function(e) {
-      return this.setVolume(e.detail[1]);
-    });
+    document.addEventListener('player_set_volume', (function(_this) {
+      return function(e) {
+        return _this.setVolume(e.detail[1] * 100);
+      };
+    })(this));
     return this.YT.addEventListener('onStateChange', this.onStateChange);
   };
 
@@ -330,7 +350,7 @@ PreloadPlayer = (function(_super) {
   };
 
   PreloadPlayer.prototype.onStateChange = function(state) {
-    if (state.data === YT_STATE_PLAYING) {
+    if (state.data === YT_STATE_PLAYING && !this.isCrossfading) {
       return this.YT.pauseVideo();
     }
   };
@@ -367,6 +387,8 @@ SpotifyInterface = (function() {
   SpotifyInterface.prototype.onUserNavigated = function(callback) {
     return this.callbacks.onUserNavigated.push(callback);
   };
+
+  SpotifyInterface.prototype.onVideoChanged = function(video) {};
 
   return SpotifyInterface;
 
@@ -548,7 +570,8 @@ if (window.location.pathname === '/watch') {
     setTimeout(function() {
       return manager.setActive(true);
     }, 500);
-    manager.onVideoChanged(appUI.onVideoChange);
+    manager.onVideoChanged(appUI.onVideoChanged);
+    manager.onVideoChanged(spotify.onVideoChanged);
     spotify.onUserNavigated(function(path) {
       if (path !== '/watch') {
         return ui.hideWatchTab();

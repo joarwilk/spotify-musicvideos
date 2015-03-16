@@ -7,6 +7,7 @@ class PlayerManager
       onVideoChanged: []
 
     @YTAPILoaded = false
+    @crossfadeShouldStop = false
 
     @players = {
       current: null
@@ -36,6 +37,7 @@ class PlayerManager
         next: e.detail[1]
 
   setActive: (isActive) ->
+    console.info isActive, 'is active'
     if isActive
       document.addEventListener 'player_track_change', @onTrack
       @onTrack detail: [@tracks.current, @tracks.next]
@@ -50,14 +52,14 @@ class PlayerManager
   onTrack: (event) =>
     id = 0
 
-    console.info 'track', event
+    console.info 'track', @players.next?.track._pid, event.detail[0]._pid
 
     # If we've preloaded this track, swap it into the "current" slot
     if @players.next and @players.next.track._pid == event.detail[0]._pid
-      @players.current = new Player('primary-player', event.detail[0], @players.next)
+      @players.current = @players.next
+      @players.current.makeCurrent()
+      @stopCrossfade()
     else
-      @players.current = new Player('primary-player', event.detail[0])
-
       @getVideoFromTrack event.detail[0], (video) =>
         @players.current.loadVideo video.id.videoId
 
@@ -74,8 +76,14 @@ class PlayerManager
     @players.current.element.fadeOut duration
     @players.next.element.fadeIn duration
 
+    @players.next.isCrossfading = true
+
     step = 0
-    interval = setInterval () ->
+    interval = setInterval () =>
+      if @crossfadeShouldStop
+        clearInterval interval
+        return
+
       progress = (step++ * CROSSFADE_STEP_SIZE) / duration
 
       if progress >= 1
@@ -86,6 +94,9 @@ class PlayerManager
         next.setVolume progress.current.getVolume()
 
     , CROSSFADE_STEP_SIZE
+
+  stopCrossfade: () ->
+    @crossfadeShouldStop = true
 
   onVideoChanged: (callback) ->
     @callbacks.onVideoChanged.push callback

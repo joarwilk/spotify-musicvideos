@@ -35,7 +35,8 @@ do ->
       manager.setActive true
     , 500
 
-    manager.onVideoChanged appUI.onVideoChange
+    manager.onVideoChanged appUI.onVideoChanged
+    manager.onVideoChanged spotify.onVideoChanged
 
     spotify.onUserNavigated (path) ->
       if path isnt '/watch'

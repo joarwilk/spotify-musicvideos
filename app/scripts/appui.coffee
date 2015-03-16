@@ -12,8 +12,7 @@ class AppUI
     $('#popup-name').html(track.name)
     $('#popup-artist').html(track.artistName)
 
-  onVideoChange: (video) ->
-    console.info 'videochange', video
+  onVideoChanged: (video) ->
     $('#video-title').html(video.snippet.title)
     $('#channel-name').html(video.snippet.channelTitle)
 

@@ -16,3 +16,6 @@ class SpotifyInterface
 
   onUserNavigated: (callback) ->
     @callbacks.onUserNavigated.push callback
+
+  onVideoChanged: (video) ->
+

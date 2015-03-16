@@ -10,10 +10,11 @@ class PreloadPlayer extends Player
   constructor: (elementID, track) ->
     super(elementID, track)
 
+    @isCrossfading = false
     #@element.hide()
 
   doBinds: () ->
-    document.addEventListener 'player_set_volume', (e) -> @setVolume e.detail[1]
+    document.addEventListener 'player_set_volume', (e) => @setVolume e.detail[1] * 100
 
     @YT.addEventListener 'onStateChange', @onStateChange
 
@@ -21,5 +22,5 @@ class PreloadPlayer extends Player
     super(id)
 
   onStateChange: (state) =>
-    if state.data == YT_STATE_PLAYING
+    if state.data == YT_STATE_PLAYING and !@isCrossfading
       @YT.pauseVideo()
