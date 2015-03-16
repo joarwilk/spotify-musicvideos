@@ -31,8 +31,6 @@ chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
 
 chrome.runtime.onMessageExternal.addListener(
   function(request, sender, sendResponse) {
-
-    console.info("Recieved external message", request)
       chrome.tabs.sendMessage(sender.tab.id, {
         method: 'event',
         title: request.title,

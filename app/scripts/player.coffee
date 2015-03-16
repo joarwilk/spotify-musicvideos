@@ -1,10 +1,11 @@
 class Player
 
-  YT_STATE_UNLOADED = -1
-  YT_STATE_FINISHED = 0
+  YT_STATE_UNSTARTED = -1
+  YT_STATE_ENDED = 0
   YT_STATE_PLAYING = 1
   YT_STATE_PAUSED = 2
   YT_STATE_BUFFERING = 3
+  YT_STATE_CUED = 5
 
   constructor: (elementID, otherPlayer) ->
     # We're creating this player from another one
@@ -25,24 +26,26 @@ class Player
           showinfo: 0 # Hide video information
       }
 
+    @element = $('#' + elementID)
+
     @doBinds()
 
   doBinds: () ->
-    document.addEventListener 'player_seek', (e) -> @seekTo args[1], true
-    document.addEventListener 'player_set_volume', (e) -> @setVolume args[1]
+    #document.addEventListener 'player_seek', (e) -> @seekTo args[1], true
+    #document.addEventListener 'player_set_volume', (e) -> @setVolume args[1]
 
-    @YT.addEventListener 'onStateChange', @onStateChange
+    #@YT.addEventListener 'onStateChange', @onStateChange
 
   loadVideo: (id) ->
-    @player.loadVideoById(id, 0, 'maxres')
-    @player.setPlaybackQuality('highres')
+    @player.loadVideoById id, 0, 'maxres'
+    @player.setPlaybackQuality 'highres'
 
   seekTo: (time) ->
 
 
   onStateChange: (state) ->
     ###switch state:
-      when YT_STATE_FINISHED:
+      when YT_STATE_ENDED:
 
       break
     ###

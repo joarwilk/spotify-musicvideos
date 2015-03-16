@@ -9,6 +9,8 @@ clean = require 'gulp-clean'
 gulp = require 'gulp'
 taskListing = require 'gulp-task-listing'
 runSequence = require 'run-sequence'
+sourcemaps = require('gulp-sourcemaps');
+plumber = require('gulp-plumber');
 
 mocha = require('gulp-mocha');
 
@@ -54,8 +56,12 @@ gulp.task 'src', ->
   .pipe(gulp.dest('dist/js/vendor'))
   gulp.src(sources.js)
   .pipe(gulp.dest(destinations.js))
+
   gulp.src(sources.scripts)
-  .pipe(coffee({bare: true}).on('error', gutil.log))
+  .pipe(plumber())
+  .pipe(sourcemaps.init())
+  .pipe(coffee({bare: true}).on('error', ( -> )))
+  .pipe(sourcemaps.write())
   .pipe(concat('app.js'))
   #.pipe(uglify())
   .pipe(gulp.dest(destinations.js))

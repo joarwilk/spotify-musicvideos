@@ -1974,7 +1974,6 @@
       this.setDone();
     };
     var promisedRequest = function (object, request, args, opt_resolveResult) {
-      console.info('requesst', request)
       var promise = new Promise(object);
       SP.request(request, args, promise, opt_resolveResult ? _resolveResult : _setDone, promise.setFail);
 
@@ -3134,7 +3133,6 @@
       return promisedRequest(this, 'player_stop', [this.id]);
     };
     Player.prototype.playTrack = function (track, ms, duration) {
-      console.info('track', track, ms , duration)
       return promisedRequest(this, 'player_play_track', [
         this.id,
         track.uri,
@@ -4282,6 +4280,7 @@
     (function (models, pu, Slider) {
       var playerUtils = pu.playerUtils;
       var player = models.player;
+      var live = require('node_modules/spotify-live/index.js');
       models.Loadable.define(models.Player, ['__uid'], '_playapp');
       function ProgressBar(wrapperID, eventManager, logger, adBreak) {
         var self = this;
@@ -4465,6 +4464,15 @@
           self.stopTimer();
           return false;
         }
+
+        live('spotify:application').update({ arguments: 'random:' + Math.random() });
+        SP.request('player_future_snapshot', ['main'], null, function (data) {
+          models.promisedRequest(this, 'player_track_change', [
+            data.rows[0].track,
+            data.rows[1].track
+          ]);
+        }, function (data) { console.error(data.error) });
+
         self._trackLength.textContent = playerUtils.secsToMins(self._player.track.duration / 1000);
         self.updateElapsedTime(0);
         self._seekingTo = null;
