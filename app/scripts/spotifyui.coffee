@@ -1,3 +1,6 @@
+# Handles everything UI-related that is outside
+# of the actual watch tab (menu items, css load etc)
+
 class SpotifyUI
 
   constructor: () ->

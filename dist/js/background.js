@@ -19,8 +19,12 @@ chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
                 });
             }
         break;
-        case 'event':
-            console.info('Recieved event', request)
+        case 'videoID':
+            $.ajax({
+                url: 'http://google.com',
+                dataType: 'html',
+                success: sendResponse
+            });
         break;
         default:
             console.error('Invalid method')

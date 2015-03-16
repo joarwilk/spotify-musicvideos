@@ -5,38 +5,42 @@ class PlayerManager
   constructor: () ->
     @YTAPILoaded = false
 
-    document.addEventListener 'player_track_change', (e) ->
+    @players = {
+      current: null
+      next: null
+    }
+
+    document.addEventListener 'player_track_change', (e) =>
+      # If we've preloaded this track, swap it into the "current" slot
+      if @players.next and @players.next.track._pid == e.detail[0]._pid
+        @players.current = new Player('current-player', @players.next)
+
       @preloadTrack e.detail[1]
-      console.info e
-      console.info 'Current track', e.detail[0]
 
   init: () ->
     YTAPILoadInterval = setInterval () =>
       if window.YT && window.YT.Player
         clearInterval YTAPILoadInterval
 
-      @YTAPILoaded = true
+        @YTAPILoaded = true
     ,  100
 
-  preloadTrack: (track) ->
-    @getVideoIdFromTrack track, (id) ->
-      player = new PreloadPlayer('preload-player')
-      player.loadVideo id
+  preloadTrack: (track) =>
+    @getVideoIdFromTrack track, (id) =>
+      @players.next = new PreloadPlayer('preload-player')
+      @players.next.loadVideo id
 
   # Transition the volume of the next track into the initial
   # volume of the current track, while fading out
   # the current track.
   # When we're finished, fire the onFinished callback
-  crossfade: (current, next, duration, onFinished) ->
-    unless current instanceof Player and next instanceof Player
-      throw new Exception('PlayerManager::crossfade requires two valid players')
-
-    current.element.fadeOut duration
-    next.element.fadeIn duration
+  crossfade: (duration, onFinished) ->
+    @players.current.element.fadeOut duration
+    @players.next.element.fadeIn duration
 
     step = 0
     interval = setInterval () ->
-      progress = (step * CROSSFADE_STEP_SIZE) / duration
+      progress = (step++ * CROSSFADE_STEP_SIZE) / duration
 
       if progress >= 1
         clearInterval interval
@@ -48,11 +52,9 @@ class PlayerManager
     , CROSSFADE_STEP_SIZE
 
   getVideoIdFromTrack: (track, callback) ->
-    query = encodeURIComponent "#{@track.name} #{@track.artistName} offical video"
-
     params =
-      part: 'id%2Csnippet'
-      q: query
+      part: 'id,snippet'
+      q: "#{track.name} #{track.artistName} offical video"
       key: 'AIzaSyD3ufUdOQMxYEWv0yLVvPnvuqSpSLTLfPU'
 
     $.getJSON 'https://content.googleapis.com/youtube/v3/search', params, (data) ->

@@ -59,9 +59,9 @@ gulp.task 'src', ->
 
   gulp.src(sources.scripts)
   .pipe(plumber())
-  .pipe(sourcemaps.init())
+ # .pipe(sourcemaps.init())
   .pipe(coffee({bare: true}).on('error', ( -> )))
-  .pipe(sourcemaps.write())
+ # .pipe(sourcemaps.write())
   .pipe(concat('app.js'))
   #.pipe(uglify())
   .pipe(gulp.dest(destinations.js))

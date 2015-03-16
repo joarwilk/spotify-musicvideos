@@ -37,8 +37,8 @@ class Player
     #@YT.addEventListener 'onStateChange', @onStateChange
 
   loadVideo: (id) ->
-    @player.loadVideoById id, 0, 'maxres'
-    @player.setPlaybackQuality 'highres'
+    @YT.loadVideoById id, 0, 'maxres'
+    @YT.setPlaybackQuality 'highres'
 
   seekTo: (time) ->
 
