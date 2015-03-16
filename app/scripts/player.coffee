@@ -1,102 +1,57 @@
 class Player
 
+  YT_STATE_UNLOADED = -1
+  YT_STATE_FINISHED = 0
+  YT_STATE_PLAYING = 1
+  YT_STATE_PAUSED = 2
+  YT_STATE_BUFFERING = 3
 
-  constructor: () ->
-    @currentTrack = null
+  constructor: (elementID, otherPlayer) ->
+    # We're creating this player from another one
+    # e.g. a preloadPlayer that has been transitioned in
+    if otherPlayer instanceof Player
+      @YT = otherPlayer.YT
+    else
+      @YT = new window.YT.Player elementID, {
+        videoId: ''
+        playerVars:
+          autoplay: 1
+          controls: 1 # Should be 0
+          rel : 0
+          disablekb: 1 # Disable Keyboard
+          iv_load_policy: 3 # Disable annotations
+          modestbranding : 1 # Hide some ui items
+          hd: 1 # Highest Quality
+          showinfo: 0 # Hide video information
+      }
 
-    YTAPILoadInterval = setInterval () =>
-      if window.YT && window.YT.Player
-        clearInterval YTAPILoadInterval
-        @player = new window.YT.Player 'youtube-frame', {
-          videoId: ''
-          playerVars: {
-            'autoplay': 1
-            'controls': 1
-            'rel' : 0
-            'disablekb': 1
-            'iv_load_policy': 3
-            'modestbranding ': 1
-            'hd': 1
-            'showinfo': 0
-          }
-        }
+    @doBinds()
 
-        @player.addEventListener 'onStateChange', (state) ->
-          console.log state, 'state'
+  doBinds: () ->
+    document.addEventListener 'player_seek', (e) -> @seekTo args[1], true
+    document.addEventListener 'player_set_volume', (e) -> @setVolume args[1]
 
-          if state.data == 0
-            context = $('#app-player').contents() # The player iframe widget
-            $('#next', context).click()
+    @YT.addEventListener 'onStateChange', @onStateChange
 
+  loadVideo: (id) ->
+    @player.loadVideoById(id, 0, 'maxres')
+    @player.setPlaybackQuality('highres')
 
-        if @currentTrack is not null
-          @changeTrack @currentTrack
-    , 100
-
-  onSyncChange: (syncValue) =>
-    @currentTrack.sync = syncValue
-
-  changeTrack: (track) =>
-    @currentTrack =
-      name: track.name
-      artist: track.artist
-      duration: track.duration
-      position: 0
-      sync: 0
-
-    @queryYoutubeVideos (items) =>
-      return unless items
-
-      video = items[0]
-
-      # Since we can't use the onReady youtube events due to sandboxing
-      # we have to check load state with an interval
-      YTPlayerLoadInterval = setInterval =>
-        return unless @player and @player.loadVideoById
-
-        @player.loadVideoById(video.id.videoId, 0, 'maxres')
-        @player.setPlaybackQuality('highres')
-        #@player.mute()
-        @player.seekTo(1, true)
-
-        clearInterval YTPlayerLoadInterval
-      , 250
+  seekTo: (time) ->
 
 
-      interval = setInterval () =>
-        clearInterval interval
+  onStateChange: (state) ->
+    ###switch state:
+      when YT_STATE_FINISHED:
 
-        query = "#{track.name} #{track.artist} official"
-        $.getJSON "https://api.soundcloud.com/tracks.json?q=#{query}&client_id=b45b1aa10f1ac2941910a7f0d10f8e28&app_version=9dc8303", (items) =>
+      break
+    ###
 
-          for item, i in items
-            diff = Math.abs((item.duration / 1000) - @currentTrack.duration)
-            console.log 'track diff ', item.duration/1000, @currentTrack.duration, item.title
-            if diff < 2
-              console.log "Using " + item.title
-              params =
-                youtube: video.id.videoId
-                ytime: @currentTrack.duration
-                soundcloud: item.permalink_url
-                stime: parseInt item.duration / 1000
-
-              $.getJSON('http://localhost:8888/delay', params, (delay) ->
-                console.log delay
-              ).error((a,b) -> console.error(a, b))
-
-              break
-      , 200
+  onVideoLoaded: () ->
 
 
-  seek: (position) =>
-    console.log 'seeking to', position / 1000
-    #@player.seekTo(position / 1000 + 2, true);
+  onFinished: () ->
 
-  onPlayState: (shouldPlay) =>
-    if shouldPlay then @player.playVideo() else @player.pauseVideo()
 
-  queryYoutubeVideos: (callback) ->
-    query = encodeURIComponent(@currentTrack.name + ' ' + @currentTrack.artist + ' offical video')
-    $.getJSON('https://content.googleapis.com/youtube/v3/search?part=id%2Csnippet&q=' + query + '&key=AIzaSyD3ufUdOQMxYEWv0yLVvPnvuqSpSLTLfPU', (data) ->
-      callback(data.items)
-    )
+  onBuffering: () ->
+

@@ -1974,6 +1974,7 @@
       this.setDone();
     };
     var promisedRequest = function (object, request, args, opt_resolveResult) {
+      console.info('requesst', request)
       var promise = new Promise(object);
       SP.request(request, args, promise, opt_resolveResult ? _resolveResult : _setDone, promise.setFail);
 
@@ -3133,6 +3134,7 @@
       return promisedRequest(this, 'player_stop', [this.id]);
     };
     Player.prototype.playTrack = function (track, ms, duration) {
+      console.info('track', track, ms , duration)
       return promisedRequest(this, 'player_play_track', [
         this.id,
         track.uri,
@@ -3172,18 +3174,6 @@
       return promisedRequest(this, 'player_skip_to_next', [this.id]);
     };
     Player.prototype.seek = function (ms) {
-
-      var live = require('node_modules/spotify-live/index.js');
-      live('spotify:application').update({ arguments: 'random:' + Math.random() });
-      SP.request('player_future_snapshot', ['main'], null, function (data) {
-        // Data lives here
-      }, function (data) {
-        var msg = data.message ;
-        var error = new Error(msg);
-        error.name = data.error;
-
-      });
-
       return promisedRequest(this, 'player_seek', [
         this.id,
         ms
