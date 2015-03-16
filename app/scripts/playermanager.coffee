@@ -10,25 +10,52 @@ class PlayerManager
       next: null
     }
 
-    document.addEventListener 'player_track_change', (e) =>
-      # If we've preloaded this track, swap it into the "current" slot
-      if @players.next and @players.next.track._pid == e.detail[0]._pid
-        @players.current = new Player('current-player', @players.next)
+    @tracks = {}
 
-      @preloadTrack e.detail[1]
-
-  init: () ->
     YTAPILoadInterval = setInterval () =>
       if window.YT && window.YT.Player
         clearInterval YTAPILoadInterval
 
+        # If we tried to load a video before
+        # the YouTube API had loaded, the video
+        # was put on hold. This call forces a
+        # re-initialization of the player
+        @players.current?.onAPILoad()
+        @players.next?.onAPILoad()
+
         @YTAPILoaded = true
     ,  100
 
+    # Store the track - even if inactive - so we can start mid-song
+    document.addEventListener 'player_track_change', (e) =>
+      @tracks =
+        current: e.detail[0]
+        next: e.detail[1]
+
+  setActive: (isActive) ->
+    if isActive
+      document.addEventListener 'player_track_change', @onTrack
+      @onTrack detail: [@tracks.current, @tracks.next]
+    else
+      document.removeEventListener 'player_track_change', @onTrack
+
   preloadTrack: (track) =>
     @getVideoIdFromTrack track, (id) =>
-      @players.next = new PreloadPlayer('preload-player')
+      @players.next = new PreloadPlayer('preload-player', track)
       @players.next.loadVideo id
+
+  onTrack: (event) =>
+    # If we've preloaded this track, swap it into the "current" slot
+    if @players.next and @players.next.track._pid == event.detail[0]._pid
+      @getVideoIdFromTrack track, (id) =>
+        @players.current = new Player('primary-player', event.detail[0], @players.next)
+        @players.current.loadVideo id
+    else
+      @getVideoIdFromTrack track, (id) =>
+        @players.current = new Player('primary-player', event.detail[0])
+        @players.current.loadVideo id
+
+    @preloadTrack event.detail[1]
 
   # Transition the volume of the next track into the initial
   # volume of the current track, while fading out

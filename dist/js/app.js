@@ -1,3 +1,53 @@
+var AppUI;
+
+AppUI = (function() {
+  function AppUI(wrapperUI) {
+    this.isExpanded = false;
+    this.isFullscreen = false;
+    this.wrapperUI = wrapperUI;
+  }
+
+  AppUI.prototype.onTrackChange = function(track) {
+    $('#popup-name').html(track.name);
+    return $('#popup-artist').html(track.artistName);
+  };
+
+  AppUI.prototype.onVideoChange = function(video) {
+    $('#video-title').html(video.title);
+    return $('#channel-name').html(video.channel);
+  };
+
+  AppUI.prototype.showTrackBubble = function() {};
+
+  AppUI.prototype.toggleFullscreen = function() {
+    var doc;
+    this.toggleExpanded();
+    this.isFullscreen = !this.isFullscreen;
+    doc = document.documentElement;
+    if (this.isFullscreen) {
+      if (doc.requestFullscreen) {
+        return doc.requestFullscreen();
+      } else if (doc.webkitRequestFullscreen) {
+        return doc.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+      }
+    } else {
+      if (document.exitFullscreen) {
+        return document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        return document.webkitExitFullscreen();
+      }
+    }
+  };
+
+  AppUI.prototype.toggleExpanded = function() {
+    this.isExpanded = !this.isExpanded;
+    return this.wrapperUI.elements.tab.toggleClass('expanded', this.isExpanded);
+  };
+
+  return AppUI;
+
+})();
+
 
 
 var Player;
@@ -17,7 +67,8 @@ Player = (function() {
 
   YT_STATE_CUED = 5;
 
-  function Player(elementID, otherPlayer) {
+  function Player(elementID, track, otherPlayer) {
+    var playerLoadInterval;
     if (otherPlayer instanceof Player) {
       this.YT = otherPlayer.YT;
     } else {
@@ -34,16 +85,47 @@ Player = (function() {
           showinfo: 0
         }
       });
+      playerLoadInterval = setInterval((function(_this) {
+        return function() {
+          if (_this.YT.loadVideoById != null) {
+            clearInterval(playerLoadInterval);
+            _this.playerIsReady = true;
+            if (_this.cuedVideoId) {
+              _this.loadVideo(_this.cuedVideoId);
+              return _this.cuedVideoId = 0;
+            }
+          }
+        };
+      })(this), 300);
     }
+    this.cuedVideoId = 0;
     this.element = $('#' + elementID);
+    this.APILoaded = false;
+    this.track = track;
     this.doBinds();
   }
 
-  Player.prototype.doBinds = function() {};
+  Player.prototype.doBinds = function() {
+    document.addEventListener('player_seek', function(e) {
+      return this.seekTo(e.detail[0]);
+    });
+    return document.addEventListener('player_set_volume', function(e) {
+      return this.setVolume(e.detail[1]);
+    });
+  };
+
+  Player.prototype.onAPILoad = function() {
+    return this.APILoaded = true;
+  };
 
   Player.prototype.loadVideo = function(id) {
-    this.YT.loadVideoById(id, 0, 'maxres');
-    return this.YT.setPlaybackQuality('highres');
+    if (this.playerIsReady) {
+      console.info('player', id);
+      this.YT.loadVideoById(id, 0, 'maxres');
+      return this.YT.setPlaybackQuality('highres');
+    } else {
+      return this.cuedVideoId = id;
+    }
   };
 
   Player.prototype.seekTo = function(time) {};
@@ -76,41 +158,77 @@ PlayerManager = (function() {
   CROSSFADE_STEP_SIZE = 25;
 
   function PlayerManager() {
+    this.onTrack = __bind(this.onTrack, this);
     this.preloadTrack = __bind(this.preloadTrack, this);
+    var YTAPILoadInterval;
     this.YTAPILoaded = false;
     this.players = {
       current: null,
       next: null
     };
-    document.addEventListener('player_track_change', (function(_this) {
-      return function(e) {
-        if (_this.players.next && _this.players.next.track._pid === e.detail[0]._pid) {
-          _this.players.current = new Player('current-player', _this.players.next);
-        }
-        return _this.preloadTrack(e.detail[1]);
-      };
-    })(this));
-  }
-
-  PlayerManager.prototype.init = function() {
-    var YTAPILoadInterval;
-    return YTAPILoadInterval = setInterval((function(_this) {
+    this.tracks = {};
+    YTAPILoadInterval = setInterval((function(_this) {
       return function() {
+        var _ref, _ref1;
         if (window.YT && window.YT.Player) {
           clearInterval(YTAPILoadInterval);
+          if ((_ref = _this.players.current) != null) {
+            _ref.onAPILoad();
+          }
+          if ((_ref1 = _this.players.next) != null) {
+            _ref1.onAPILoad();
+          }
           return _this.YTAPILoaded = true;
         }
       };
     })(this), 100);
+    document.addEventListener('player_track_change', (function(_this) {
+      return function(e) {
+        return _this.tracks = {
+          current: e.detail[0],
+          next: e.detail[1]
+        };
+      };
+    })(this));
+  }
+
+  PlayerManager.prototype.setActive = function(isActive) {
+    if (isActive) {
+      document.addEventListener('player_track_change', this.onTrack);
+      return this.onTrack({
+        detail: [this.tracks.current, this.tracks.next]
+      });
+    } else {
+      return document.removeEventListener('player_track_change', this.onTrack);
+    }
   };
 
   PlayerManager.prototype.preloadTrack = function(track) {
     return this.getVideoIdFromTrack(track, (function(_this) {
       return function(id) {
-        _this.players.next = new PreloadPlayer('preload-player');
+        _this.players.next = new PreloadPlayer('preload-player', track);
         return _this.players.next.loadVideo(id);
       };
     })(this));
+  };
+
+  PlayerManager.prototype.onTrack = function(event) {
+    if (this.players.next && this.players.next.track._pid === event.detail[0]._pid) {
+      this.getVideoIdFromTrack(track, (function(_this) {
+        return function(id) {
+          _this.players.current = new Player('primary-player', event.detail[0], _this.players.next);
+          return _this.players.current.loadVideo(id);
+        };
+      })(this));
+    } else {
+      this.getVideoIdFromTrack(track, (function(_this) {
+        return function(id) {
+          _this.players.current = new Player('primary-player', event.detail[0]);
+          return _this.players.current.loadVideo(id);
+        };
+      })(this));
+    }
+    return this.preloadTrack(event.detail[1]);
   };
 
   PlayerManager.prototype.crossfade = function(duration, onFinished) {
@@ -152,10 +270,24 @@ var PreloadPlayer,
   __hasProp = {}.hasOwnProperty;
 
 PreloadPlayer = (function(_super) {
+  var YT_STATE_BUFFERING, YT_STATE_CUED, YT_STATE_ENDED, YT_STATE_PAUSED, YT_STATE_PLAYING, YT_STATE_UNSTARTED;
+
   __extends(PreloadPlayer, _super);
 
-  function PreloadPlayer(elementID) {
-    PreloadPlayer.__super__.constructor.call(this, elementID);
+  YT_STATE_UNSTARTED = -1;
+
+  YT_STATE_ENDED = 0;
+
+  YT_STATE_PLAYING = 1;
+
+  YT_STATE_PAUSED = 2;
+
+  YT_STATE_BUFFERING = 3;
+
+  YT_STATE_CUED = 5;
+
+  function PreloadPlayer(elementID, track) {
+    PreloadPlayer.__super__.constructor.call(this, elementID, track);
     this.element.hide();
   }
 
@@ -170,202 +302,43 @@ PreloadPlayer = (function(_super) {
     return console.info('loadvideo');
   };
 
+  PreloadPlayer.prototype.onStateChange = function(state) {
+    if (state === YT_STATE_PLAYING) {
+      return this.YT.pauseVideo();
+    }
+  };
+
   return PreloadPlayer;
 
 })(Player);
 
-var SpotifyInterface,
-  __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+var SpotifyInterface;
 
 SpotifyInterface = (function() {
-  var instance;
-
-  instance = null;
-
   function SpotifyInterface() {
-    this.stopPlayerQuery = __bind(this.stopPlayerQuery, this);
-    this.runPlayerQuery = __bind(this.runPlayerQuery, this);
-    this.updateElements = __bind(this.updateElements, this);
-    this.currentTime = 0;
-    this.shouldRun = false;
-    this.currentPath = '';
-    this.updateElements();
     this.callbacks = {
-      onState: [],
-      onPlayState: [],
-      onTrack: [],
-      onSeek: [],
       onUserNavigated: []
     };
-    this.player = {
-      playing: this.elements.playButton.hasClass('playing'),
-      position: 0,
-      name: this.elements.trackName.text(),
-      artist: this.elements.trackArtist.text(),
-      duration: 0
-    };
-  }
-
-  SpotifyInterface.prototype.updateElements = function() {
-    var context;
-    context = $('#app-player').contents();
-    return this.elements = {
-      playButton: $('#play-pause', context),
-      trackName: $('#track-name a', context),
-      trackArtist: $('#track-artist a', context),
-      timeMarker: $('#track-current', context),
-      duration: $('#track-length', context)
-    };
-  };
-
-  SpotifyInterface.prototype.runPlayerQuery = function() {
-    var updateTime;
-    this.shouldRun = true;
-    this.previousTimestamp = 0;
-    updateTime = (function(_this) {
-      return function(timestamp) {
-        _this.player.position += timestamp - _this.previousTimestamp;
-        _this.previousTimestamp = timestamp;
-        if (_this.shouldRun) {
-          return requestAnimationFrame(updateTime);
+    this.currentPath = window.location.pathname;
+    setInterval((function(_this) {
+      return function() {
+        var callback, _i, _len, _ref, _results;
+        if (_this.currentPath !== window.location.pathname) {
+          _this.currentPath = window.location.pathname;
+          _ref = _this.callbacks.onUserNavigated;
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            callback = _ref[_i];
+            _results.push(callback(_this.currentPath));
+          }
+          return _results;
         }
       };
-    })(this);
-    requestAnimationFrame(updateTime);
-    return this.intervals = {
-
-      /*
-      The position interval looks at the spotify
-      player DOM to retrieve the current position
-      in minutes and seconds. If we're diffing
-      too much with our internal position, the
-      user has seeked
-       */
-      position: setInterval((function(_this) {
-        return function() {
-          var callback, markerTextSplit, milliseconds, minutes, seconds, timeMarkerText, _i, _len, _ref, _results;
-          if (!_this.player.playing) {
-            return;
-          }
-          timeMarkerText = _this.elements.timeMarker.text();
-          markerTextSplit = timeMarkerText.split(':');
-          minutes = parseInt(markerTextSplit[0]);
-          seconds = parseInt(markerTextSplit[1]);
-          milliseconds = 1000 * (minutes * 60 + seconds);
-          if (Math.abs(_this.player.position - milliseconds) > 3500) {
-            _this.player.position = milliseconds;
-            console.log('Seek');
-            _ref = _this.callbacks.onSeek;
-            _results = [];
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              callback = _ref[_i];
-              _results.push(callback(milliseconds));
-            }
-            return _results;
-          }
-        };
-      })(this), 200),
-
-      /*
-      The track interval looks at the play button
-      as well as the text and updates the player state
-       */
-      track: setInterval((function(_this) {
-        return function() {
-          var artist, artistChanged, callback, duration, name, playStateChanged, trackChanged, _i, _j, _len, _len1, _ref, _ref1;
-          _this.updateElements();
-          name = _this.elements.trackName[0].innerText;
-          artist = _this.elements.trackArtist[0].innerText;
-          trackChanged = name !== _this.player.name;
-          artistChanged = artist !== _this.player.artist;
-          playStateChanged = _this.player.playing !== _this.elements.playButton.hasClass('playing');
-          if (playStateChanged) {
-            console.log(_this.player.playing ? 'Paused' : 'Started');
-            _this.player.playing = _this.elements.playButton.hasClass('playing');
-            _ref = _this.callbacks.onPlayState;
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              callback = _ref[_i];
-              callback(_this.player.playing);
-            }
-          }
-          if (trackChanged || artistChanged) {
-            _this.player.name = name;
-            _this.player.artist = artist;
-            duration = _this.elements.duration[0].innerText.split(':');
-            _this.player.duration = parseInt(duration[0] * 60) + parseInt(duration[1]);
-            console.log(_this.player.duration);
-            _ref1 = _this.callbacks.onTrack;
-            for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-              callback = _ref1[_j];
-              callback(_this.getPlayerInfo());
-            }
-            return console.log("Current song: " + name + " " + artist);
-          }
-        };
-      })(this), 250),
-
-      /*
-      The URL interval checks the current URL
-      and fires the userNavigated callback when
-      the user has navigated
-      
-      A window.onPushState-event that triggers
-      for javascript history events as well
-      would be amazing, but that isn't
-      implemented in browsers yet
-       */
-      url: setInterval((function(_this) {
-        return function() {
-          var callback, _i, _len, _ref, _results;
-          if (_this.currentPath !== window.location.pathname) {
-            _this.currentPath = window.location.pathname;
-            _ref = _this.callbacks.onUserNavigated;
-            _results = [];
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              callback = _ref[_i];
-              _results.push(callback(_this.currentPath));
-            }
-            return _results;
-          }
-        };
-      })(this), 333)
-    };
-  };
-
-  SpotifyInterface.prototype.stopPlayerQuery = function() {
-    var id, _i, _len, _ref, _results;
-    this.shouldRun = false;
-    _ref = this.intervals;
-    _results = [];
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      id = _ref[_i];
-      _results.push(clearInterval(id));
-    }
-    return _results;
-  };
-
-  SpotifyInterface.prototype.getPlayerInfo = function() {
-    return this.player;
-  };
-
-  SpotifyInterface.prototype.onPlayState = function(callback) {
-    return this.callbacks.onPlayState.push(callback);
-  };
-
-  SpotifyInterface.prototype.onTrack = function(callback) {
-    return this.callbacks.onTrack.push(callback);
-  };
-
-  SpotifyInterface.prototype.onSeek = function(callback) {
-    return this.callbacks.onSeek.push(callback);
-  };
+    })(this), 333);
+  }
 
   SpotifyInterface.prototype.onUserNavigated = function(callback) {
     return this.callbacks.onUserNavigated.push(callback);
-  };
-
-  SpotifyInterface.get = function() {
-    return instance != null ? instance : instance = new SpotifyInterface();
   };
 
   return SpotifyInterface;
@@ -515,19 +488,6 @@ SpotifyUI = (function() {
 
 })();
 
-var Synchronizer;
-
-Synchronizer = (function() {
-  function Synchronizer() {}
-
-  Synchronizer.prototype.onTrack = function(track) {
-    return console.log(chrome);
-  };
-
-  return Synchronizer;
-
-})();
-
 if (window.location.pathname === '/watch') {
   window.location = '/collection/playlists#watch';
 }
@@ -549,22 +509,17 @@ if (window.location.pathname === '/watch') {
   $(document).ready(function() {
     ui.attachMenuItem();
     ui.createWatchTab();
-    manager.init();
     if (loadImmediately) {
       return $('#overlay').show();
     }
   });
   return ui.onStarted(function() {
-    var player, spotify, sync;
+    var player, spotify;
     player = new Player();
-    sync = new Synchronizer();
     spotify = new SpotifyInterface();
-    ui.onTabShown(spotify.runPlayerQuery);
-    ui.onTabHidden(spotify.stopPlayerQuery);
-    spotify.onTrack(sync.onTrack);
-    spotify.onTrack(player.changeTrack);
-    spotify.onSeek(player.seek);
-    spotify.onPlayState(player.onPlayState);
+    setTimeout(function() {
+      return manager.setActive(true);
+    }, 500);
     spotify.onUserNavigated(function(path) {
       if (path !== '/watch') {
         return ui.hideWatchTab();

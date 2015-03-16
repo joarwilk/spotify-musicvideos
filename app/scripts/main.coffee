@@ -22,23 +22,17 @@ do ->
     ui.attachMenuItem()
     ui.createWatchTab()
 
-    manager.init()
-
     if loadImmediately
       $('#overlay').show()
 
   ui.onStarted () ->
     player = new Player()
-    sync = new Synchronizer()
     spotify = new SpotifyInterface()
 
-    ui.onTabShown spotify.runPlayerQuery
-    ui.onTabHidden spotify.stopPlayerQuery
+    setTimeout () ->
+      manager.setActive true
+    , 500
 
-    spotify.onTrack sync.onTrack
-    spotify.onTrack player.changeTrack
-    spotify.onSeek player.seek
-    spotify.onPlayState player.onPlayState
     spotify.onUserNavigated (path) ->
       if path isnt '/watch'
         ui.hideWatchTab()

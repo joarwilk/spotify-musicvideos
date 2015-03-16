@@ -7,7 +7,7 @@ class Player
   YT_STATE_BUFFERING = 3
   YT_STATE_CUED = 5
 
-  constructor: (elementID, otherPlayer) ->
+  constructor: (elementID, track, otherPlayer) ->
     # We're creating this player from another one
     # e.g. a preloadPlayer that has been transitioned in
     if otherPlayer instanceof Player
@@ -26,19 +26,40 @@ class Player
           showinfo: 0 # Hide video information
       }
 
+      playerLoadInterval = setInterval () =>
+        if @YT.loadVideoById?
+          clearInterval playerLoadInterval
+          @playerIsReady = true
+
+          if @cuedVideoId
+            @loadVideo @cuedVideoId
+            @cuedVideoId = 0
+      , 300
+
+    @cuedVideoId = 0
+
     @element = $('#' + elementID)
+    @APILoaded = false
+    @track = track
 
     @doBinds()
 
   doBinds: () ->
-    #document.addEventListener 'player_seek', (e) -> @seekTo args[1], true
-    #document.addEventListener 'player_set_volume', (e) -> @setVolume args[1]
+    document.addEventListener 'player_seek', (e) -> @seekTo e.detail[0]
+    document.addEventListener 'player_set_volume', (e) -> @setVolume e.detail[1]
 
     #@YT.addEventListener 'onStateChange', @onStateChange
 
+  onAPILoad: () ->
+    @APILoaded = true
+
   loadVideo: (id) ->
-    @YT.loadVideoById id, 0, 'maxres'
-    @YT.setPlaybackQuality 'highres'
+    if @playerIsReady
+      console.info 'player', id
+      @YT.loadVideoById id, 0, 'maxres'
+      @YT.setPlaybackQuality 'highres'
+    else
+      @cuedVideoId = id
 
   seekTo: (time) ->
 
