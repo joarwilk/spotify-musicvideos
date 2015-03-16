@@ -20,53 +20,67 @@ class PlayerManager
       if window.YT && window.YT.Player
         clearInterval YTAPILoadInterval
 
-        # If we tried to load a video before
-        # the YouTube API had loaded, the video
-        # was put on hold. This call forces a
-        # re-initialization of the player
-        @players.current?.onAPILoad()
-        @players.next?.onAPILoad()
 
         @YTAPILoaded = true
     ,  100
 
     # Store the track - even if inactive - so we can start mid-song
-    document.addEventListener 'player_track_change', (e) =>
-      @tracks =
-        current: e.detail[0]
-        next: e.detail[1]
+    document.addEventListener 'player_track_change', @updateCurrentTracks
+
+  init: () ->
+    @players.current = new Player(null, true)
 
   setActive: (isActive) ->
-    console.info isActive, 'is active'
     if isActive
+      document.removeEventListener 'player_track_change', @updateCurrentTracks
       document.addEventListener 'player_track_change', @onTrack
-      @onTrack detail: [@tracks.current, @tracks.next]
+
+      if @tracks.current
+        @onTrack detail: [@tracks.current, @tracks.next]
     else
+      document.addEventListener 'player_track_change', @updateCurrentTracks
       document.removeEventListener 'player_track_change', @onTrack
 
   preloadTrack: (track) =>
     @getVideoFromTrack track, (video) =>
-      @players.next = new PreloadPlayer('preload-player', track)
+      @players.next?.remove()
+      @players.next = new Player(track, false)
       @players.next.loadVideo video.id.videoId
+
+  updateCurrentTracks: (event) =>
+    @tracks =
+      current: event.detail[0]
+      next: event.detail[1]
 
   onTrack: (event) =>
     id = 0
 
-    console.info 'track', @players.next?.track._pid, event.detail[0]._pid
+    # Sometimes the track event is fired multiple times
+    # this if statement verifies that we only refresh the players
+    # when the tracks actually change
+    if @tracks.current? and !(event.detail[0]._pid == @tracks.current._pid)
+      # If we've preloaded this track, swap it into the "current" slot
+      if @players.next and @players.next.track._pid == event.detail[0]._pid
+        @players.current.remove()
 
-    # If we've preloaded this track, swap it into the "current" slot
-    if @players.next and @players.next.track._pid == event.detail[0]._pid
-      @players.current = @players.next
-      @players.current.makeCurrent()
-      @stopCrossfade()
-    else
-      @getVideoFromTrack event.detail[0], (video) =>
-        @players.current.loadVideo video.id.videoId
+        # Make the preloaded player the new main player
+        @players.current = @players.next
+        @players.next = null
+        @players.current.makeCurrent()
 
-        for callback in @callbacks.onVideoChanged
+        @stopCrossfade()
+      # if not, load the video into the current player
+      else
+        @players.current.setTrack event.detail[0]
+
+        @getVideoFromTrack event.detail[0], (video) =>
+          @players.current.loadVideo video.id.videoId
+
+          for callback in @callbacks.onVideoChanged
             callback video
 
-    @preloadTrack event.detail[1]
+      @preloadTrack event.detail[1]
+    @updateCurrentTracks event
 
   # Transition the volume of the next track into the initial
   # volume of the current track, while fading out
@@ -102,6 +116,7 @@ class PlayerManager
     @callbacks.onVideoChanged.push callback
 
   getVideoFromTrack: (track, callback) ->
+    #console.error track
     params =
       part: 'id,snippet'
       q: "#{track.name} #{track.artistName} offical video"

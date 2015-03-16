@@ -1,25 +1,20 @@
 class Player
 
-  YT_STATE_UNSTARTED = -1
-  YT_STATE_ENDED = 0
-  YT_STATE_PLAYING = 1
-  YT_STATE_PAUSED = 2
-  YT_STATE_BUFFERING = 3
-  YT_STATE_CUED = 5
+  @ID = 0
 
-  @playerID = 0
+  constructor: (track, isCurrent) ->
 
-  constructor: (track, isNext) ->
+    @_id = Player.ID++
 
-    id = @playerID++
+    console.info 'player', @_id, isCurrent, track
 
-    $('.video-wrapper').append('<div id="player-' + id + '"></div>')
+    $('.video-wrapper').prepend('<div id="player-' + @_id + '"></div>')
 
-    @YT = new YT.Player "player-#{id}", {
+    @YT = new YT.Player "player-#{@_id}", {
       videoId: ''
       playerVars:
         autoplay: 0
-        controls: 1 # Should be 0
+        controls: 0
         rel : 0
         disablekb: 1 # Disable Keyboard
         iv_load_policy: 3 # Disable annotations
@@ -42,14 +37,17 @@ class Player
 
     @cuedVideoId = 0
 
-    @element = $('#' + elementID)
+    @element = $('#' + @_id)
     @APILoaded = false
     @track = track
+    @isCurrent = isCurrent
 
 
   doBinds: () ->
     document.addEventListener 'player_seek', (e) => @seekTo e.detail[0]
     document.addEventListener 'player_set_volume', (e) => @setVolume e.detail[1] * 100
+    document.addEventListener 'player_play', (e) => @togglePlay true
+    document.addEventListener 'player_pause', (e) => @togglePlay false
 
     @YT.addEventListener 'onStateChange', @onStateChange
 
@@ -57,12 +55,16 @@ class Player
     @APILoaded = true
 
   loadVideo: (id) ->
+    console.error 'loading video'
     if @playerIsReady
-      console.info 'player', id
       @YT.loadVideoById id, 0, 'maxres'
       @YT.setPlaybackQuality 'highres'
     else
+      console.info 'Cued video', id, @_id
       @cuedVideoId = id
+
+  togglePlay: (play) ->
+
 
   seekTo: (time) ->
     console.info 'seek', time
@@ -71,14 +73,17 @@ class Player
   setVolume: (volume) =>
     @YT.setVolume volume
 
-  onStateChange: (state) ->
-    ###switch state:
-      when YT_STATE_ENDED:
+  onStateChange: (state) =>
+    console.log @isCurrent
+    if state.data == YT.PlayerState.PLAYING and !@isCurrent
+      @YT.pauseVideo()
 
-      break
-    ###
+  setTrack: (track) =>
+    @track = track
 
-  makeCurrent: () ->
+  makeCurrent: () =>
+    @isCurrent = true
+    @YT.playVideo()
 
   onVideoLoaded: () ->
 
@@ -87,4 +92,9 @@ class Player
 
 
   onBuffering: () ->
+
+  remove: () ->
+    console.info 'removing ' + @_id
+    @YT.destroy()
+    @element.remove()
 

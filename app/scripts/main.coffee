@@ -28,21 +28,21 @@ do ->
       $('#overlay').show()
 
   ui.onStarted () ->
-    player = new Player()
     spotify = new SpotifyInterface()
-
-    setTimeout () ->
-      manager.setActive true
-    , 500
 
     manager.onVideoChanged appUI.onVideoChanged
     manager.onVideoChanged spotify.onVideoChanged
+
 
     spotify.onUserNavigated (path) ->
       if path isnt '/watch'
         ui.hideWatchTab()
 
     if loadImmediately
+      console.info 'immideatl'
       $('#overlay').hide()
       $('#section-user').addClass 'hidden' # User tab is open by defaut
       ui.showWatchTab()
+
+      manager.init()
+      manager.setActive true

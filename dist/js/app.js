@@ -54,32 +54,22 @@ var Player,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
 Player = (function() {
-  var YT_STATE_BUFFERING, YT_STATE_CUED, YT_STATE_ENDED, YT_STATE_PAUSED, YT_STATE_PLAYING, YT_STATE_UNSTARTED;
+  Player.ID = 0;
 
-  YT_STATE_UNSTARTED = -1;
-
-  YT_STATE_ENDED = 0;
-
-  YT_STATE_PLAYING = 1;
-
-  YT_STATE_PAUSED = 2;
-
-  YT_STATE_BUFFERING = 3;
-
-  YT_STATE_CUED = 5;
-
-  Player.playerID = 0;
-
-  function Player(track, isNext) {
+  function Player(track, isCurrent) {
+    this.makeCurrent = __bind(this.makeCurrent, this);
+    this.setTrack = __bind(this.setTrack, this);
+    this.onStateChange = __bind(this.onStateChange, this);
     this.setVolume = __bind(this.setVolume, this);
-    var id, playerLoadInterval;
-    id = this.playerID++;
-    $('.video-wrapper').append('<div id="player-' + id + '"></div>');
-    this.YT = new YT.Player("player-" + id, {
+    var playerLoadInterval;
+    this._id = Player.ID++;
+    console.info('player', this._id, isCurrent, track);
+    $('.video-wrapper').prepend('<div id="player-' + this._id + '"></div>');
+    this.YT = new YT.Player("player-" + this._id, {
       videoId: '',
       playerVars: {
         autoplay: 0,
-        controls: 1,
+        controls: 0,
         rel: 0,
         disablekb: 1,
         iv_load_policy: 3,
@@ -102,9 +92,10 @@ Player = (function() {
       };
     })(this), 200);
     this.cuedVideoId = 0;
-    this.element = $('#' + elementID);
+    this.element = $('#' + this._id);
     this.APILoaded = false;
     this.track = track;
+    this.isCurrent = isCurrent;
   }
 
   Player.prototype.doBinds = function() {
@@ -118,6 +109,16 @@ Player = (function() {
         return _this.setVolume(e.detail[1] * 100);
       };
     })(this));
+    document.addEventListener('player_play', (function(_this) {
+      return function(e) {
+        return _this.togglePlay(true);
+      };
+    })(this));
+    document.addEventListener('player_pause', (function(_this) {
+      return function(e) {
+        return _this.togglePlay(false);
+      };
+    })(this));
     return this.YT.addEventListener('onStateChange', this.onStateChange);
   };
 
@@ -126,14 +127,17 @@ Player = (function() {
   };
 
   Player.prototype.loadVideo = function(id) {
+    console.error('loading video');
     if (this.playerIsReady) {
-      console.info('player', id);
       this.YT.loadVideoById(id, 0, 'maxres');
       return this.YT.setPlaybackQuality('highres');
     } else {
+      console.info('Cued video', id, this._id);
       return this.cuedVideoId = id;
     }
   };
+
+  Player.prototype.togglePlay = function(play) {};
 
   Player.prototype.seekTo = function(time) {
     console.info('seek', time);
@@ -145,21 +149,32 @@ Player = (function() {
   };
 
   Player.prototype.onStateChange = function(state) {
-
-    /*switch state:
-      when YT_STATE_ENDED:
-    
-      break
-     */
+    console.log(this.isCurrent);
+    if (state.data === YT.PlayerState.PLAYING && !this.isCurrent) {
+      return this.YT.pauseVideo();
+    }
   };
 
-  Player.prototype.makeCurrent = function() {};
+  Player.prototype.setTrack = function(track) {
+    return this.track = track;
+  };
+
+  Player.prototype.makeCurrent = function() {
+    this.isCurrent = true;
+    return this.YT.playVideo();
+  };
 
   Player.prototype.onVideoLoaded = function() {};
 
   Player.prototype.onFinished = function() {};
 
   Player.prototype.onBuffering = function() {};
+
+  Player.prototype.remove = function() {
+    console.info('removing ' + this._id);
+    this.YT.destroy();
+    return this.element.remove();
+  };
 
   return Player;
 
@@ -175,6 +190,7 @@ PlayerManager = (function() {
 
   function PlayerManager() {
     this.onTrack = __bind(this.onTrack, this);
+    this.updateCurrentTracks = __bind(this.updateCurrentTracks, this);
     this.preloadTrack = __bind(this.preloadTrack, this);
     var YTAPILoadInterval;
     this.callbacks = {
@@ -189,37 +205,30 @@ PlayerManager = (function() {
     this.tracks = {};
     YTAPILoadInterval = setInterval((function(_this) {
       return function() {
-        var _ref, _ref1;
         if (window.YT && window.YT.Player) {
           clearInterval(YTAPILoadInterval);
-          if ((_ref = _this.players.current) != null) {
-            _ref.onAPILoad();
-          }
-          if ((_ref1 = _this.players.next) != null) {
-            _ref1.onAPILoad();
-          }
           return _this.YTAPILoaded = true;
         }
       };
     })(this), 100);
-    document.addEventListener('player_track_change', (function(_this) {
-      return function(e) {
-        return _this.tracks = {
-          current: e.detail[0],
-          next: e.detail[1]
-        };
-      };
-    })(this));
+    document.addEventListener('player_track_change', this.updateCurrentTracks);
   }
 
+  PlayerManager.prototype.init = function() {
+    return this.players.current = new Player(null, true);
+  };
+
   PlayerManager.prototype.setActive = function(isActive) {
-    console.info(isActive, 'is active');
     if (isActive) {
+      document.removeEventListener('player_track_change', this.updateCurrentTracks);
       document.addEventListener('player_track_change', this.onTrack);
-      return this.onTrack({
-        detail: [this.tracks.current, this.tracks.next]
-      });
+      if (this.tracks.current) {
+        return this.onTrack({
+          detail: [this.tracks.current, this.tracks.next]
+        });
+      }
     } else {
+      document.addEventListener('player_track_change', this.updateCurrentTracks);
       return document.removeEventListener('player_track_change', this.onTrack);
     }
   };
@@ -227,36 +236,52 @@ PlayerManager = (function() {
   PlayerManager.prototype.preloadTrack = function(track) {
     return this.getVideoFromTrack(track, (function(_this) {
       return function(video) {
-        _this.players.next = new PreloadPlayer('preload-player', track);
+        var _ref;
+        if ((_ref = _this.players.next) != null) {
+          _ref.remove();
+        }
+        _this.players.next = new Player(track, false);
         return _this.players.next.loadVideo(video.id.videoId);
       };
     })(this));
   };
 
+  PlayerManager.prototype.updateCurrentTracks = function(event) {
+    return this.tracks = {
+      current: event.detail[0],
+      next: event.detail[1]
+    };
+  };
+
   PlayerManager.prototype.onTrack = function(event) {
-    var id, _ref;
+    var id;
     id = 0;
-    console.info('track', (_ref = this.players.next) != null ? _ref.track._pid : void 0, event.detail[0]._pid);
-    if (this.players.next && this.players.next.track._pid === event.detail[0]._pid) {
-      this.players.current = this.players.next;
-      this.players.current.makeCurrent();
-      this.stopCrossfade();
-    } else {
-      this.getVideoFromTrack(event.detail[0], (function(_this) {
-        return function(video) {
-          var callback, _i, _len, _ref1, _results;
-          _this.players.current.loadVideo(video.id.videoId);
-          _ref1 = _this.callbacks.onVideoChanged;
-          _results = [];
-          for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-            callback = _ref1[_i];
-            _results.push(callback(video));
-          }
-          return _results;
-        };
-      })(this));
+    if ((this.tracks.current != null) && !(event.detail[0]._pid === this.tracks.current._pid)) {
+      if (this.players.next && this.players.next.track._pid === event.detail[0]._pid) {
+        this.players.current.remove();
+        this.players.current = this.players.next;
+        this.players.next = null;
+        this.players.current.makeCurrent();
+        this.stopCrossfade();
+      } else {
+        this.players.current.setTrack(event.detail[0]);
+        this.getVideoFromTrack(event.detail[0], (function(_this) {
+          return function(video) {
+            var callback, _i, _len, _ref, _results;
+            _this.players.current.loadVideo(video.id.videoId);
+            _ref = _this.callbacks.onVideoChanged;
+            _results = [];
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              callback = _ref[_i];
+              _results.push(callback(video));
+            }
+            return _results;
+          };
+        })(this));
+      }
+      this.preloadTrack(event.detail[1]);
     }
-    return this.preloadTrack(event.detail[1]);
+    return this.updateCurrentTracks(event);
   };
 
   PlayerManager.prototype.crossfade = function(duration, onFinished) {
@@ -307,57 +332,6 @@ PlayerManager = (function() {
   return PlayerManager;
 
 })();
-
-var PreloadPlayer,
-  __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
-  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
-  __hasProp = {}.hasOwnProperty;
-
-PreloadPlayer = (function(_super) {
-  var YT_STATE_BUFFERING, YT_STATE_CUED, YT_STATE_ENDED, YT_STATE_PAUSED, YT_STATE_PLAYING, YT_STATE_UNSTARTED;
-
-  __extends(PreloadPlayer, _super);
-
-  YT_STATE_UNSTARTED = -1;
-
-  YT_STATE_ENDED = 0;
-
-  YT_STATE_PLAYING = 1;
-
-  YT_STATE_PAUSED = 2;
-
-  YT_STATE_BUFFERING = 3;
-
-  YT_STATE_CUED = 5;
-
-  function PreloadPlayer(elementID, track) {
-    this.onStateChange = __bind(this.onStateChange, this);
-    PreloadPlayer.__super__.constructor.call(this, elementID, track);
-    this.isCrossfading = false;
-  }
-
-  PreloadPlayer.prototype.doBinds = function() {
-    document.addEventListener('player_set_volume', (function(_this) {
-      return function(e) {
-        return _this.setVolume(e.detail[1] * 100);
-      };
-    })(this));
-    return this.YT.addEventListener('onStateChange', this.onStateChange);
-  };
-
-  PreloadPlayer.prototype.loadVideo = function(id) {
-    return PreloadPlayer.__super__.loadVideo.call(this, id);
-  };
-
-  PreloadPlayer.prototype.onStateChange = function(state) {
-    if (state.data === YT_STATE_PLAYING && !this.isCrossfading) {
-      return this.YT.pauseVideo();
-    }
-  };
-
-  return PreloadPlayer;
-
-})(Player);
 
 var SpotifyInterface;
 
@@ -564,12 +538,8 @@ if (window.location.pathname === '/watch') {
     }
   });
   return ui.onStarted(function() {
-    var player, spotify;
-    player = new Player();
+    var spotify;
     spotify = new SpotifyInterface();
-    setTimeout(function() {
-      return manager.setActive(true);
-    }, 500);
     manager.onVideoChanged(appUI.onVideoChanged);
     manager.onVideoChanged(spotify.onVideoChanged);
     spotify.onUserNavigated(function(path) {
@@ -578,9 +548,12 @@ if (window.location.pathname === '/watch') {
       }
     });
     if (loadImmediately) {
+      console.info('immideatl');
       $('#overlay').hide();
       $('#section-user').addClass('hidden');
-      return ui.showWatchTab();
+      ui.showWatchTab();
+      manager.init();
+      return manager.setActive(true);
     }
   });
 })();
