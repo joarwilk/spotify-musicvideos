@@ -2,15 +2,15 @@ class Player
 
   @ID = 0
 
-  constructor: (track, isCurrent) ->
+  constructor: (track, videoId, isCurrent) ->
     @_id = Player.ID++
 
     $('.video-wrapper').prepend('<div id="player-' + @_id + '"></div>')
 
     @YT = new YT.Player "player-#{@_id}", {
-      videoId: ''
+      videoId: videoId
       playerVars:
-        autoplay: 0
+        autoplay: 1
         controls: 0
         rel : 0 # Hide related videos
         disablekb: 1 # Disable Keyboard
@@ -21,6 +21,7 @@ class Player
         start: 1 # The first second is very commonly black and mute
     }
 
+    @onReadyCallbacks = []
     playerLoadInterval = setInterval () =>
       if @YT.loadVideoById?
         clearInterval playerLoadInterval
@@ -28,15 +29,13 @@ class Player
 
         @doBinds()
 
-        if @cuedVideoId
-          @loadVideo @cuedVideoId
-          @cuedVideoId = 0
+        for callback in @onReadyCallbacks
+          callback()
     , 200
 
-    @cuedVideoId = 0
 
     @element = $('#' + @_id)
-    @APILoaded = false
+    @playerIsReady = false
     @track = track
     @isCurrent = isCurrent
     @volume = 100
@@ -52,19 +51,19 @@ class Player
 
     @YT.addEventListener 'onStateChange', @onStateChange
 
-  onAPILoad: () ->
-    @APILoaded = true
-
-  loadVideo: (id) ->
+  onReady: (callback) =>
     if @playerIsReady
-      @YT.loadVideoById id, 0, 'maxres'
-      @YT.setPlaybackQuality 'highres'
-      @YT.setVolume 0 unless @isCurrent
-      @YT.seekTo 2, true unless @isCurrent
+      callback()
     else
-      @cuedVideoId = id
+      @onReadyCallbacks.push callback
 
-  togglePlay: (play) ->
+  loadVideo: (id) =>
+    @YT.loadVideoById id, 0, 'maxres'
+    @YT.setPlaybackQuality 'highres'
+    @YT.setVolume 0 unless @isCurrent
+    @YT.seekTo 2, true unless @isCurrent
+
+  togglePlay: (play) =>
     if play then @YT.playVideo() else @YT.pauseVideo()
 
   seekTo: (time) =>

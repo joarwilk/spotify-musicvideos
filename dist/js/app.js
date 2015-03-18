@@ -98,20 +98,23 @@ var Player,
 Player = (function() {
   Player.ID = 0;
 
-  function Player(track, isCurrent) {
+  function Player(track, videoId, isCurrent) {
     this.makeCurrent = __bind(this.makeCurrent, this);
     this.setTrack = __bind(this.setTrack, this);
     this.onStateChange = __bind(this.onStateChange, this);
     this.getVolume = __bind(this.getVolume, this);
     this.setVolume = __bind(this.setVolume, this);
     this.seekTo = __bind(this.seekTo, this);
+    this.togglePlay = __bind(this.togglePlay, this);
+    this.loadVideo = __bind(this.loadVideo, this);
+    this.onReady = __bind(this.onReady, this);
     var playerLoadInterval;
     this._id = Player.ID++;
     $('.video-wrapper').prepend('<div id="player-' + this._id + '"></div>');
     this.YT = new YT.Player("player-" + this._id, {
-      videoId: '',
+      videoId: videoId,
       playerVars: {
-        autoplay: 0,
+        autoplay: 1,
         controls: 0,
         rel: 0,
         disablekb: 1,
@@ -122,22 +125,26 @@ Player = (function() {
         start: 1
       }
     });
+    this.onReadyCallbacks = [];
     playerLoadInterval = setInterval((function(_this) {
       return function() {
+        var callback, _i, _len, _ref, _results;
         if (_this.YT.loadVideoById != null) {
           clearInterval(playerLoadInterval);
           _this.playerIsReady = true;
           _this.doBinds();
-          if (_this.cuedVideoId) {
-            _this.loadVideo(_this.cuedVideoId);
-            return _this.cuedVideoId = 0;
+          _ref = _this.onReadyCallbacks;
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            callback = _ref[_i];
+            _results.push(callback());
           }
+          return _results;
         }
       };
     })(this), 200);
-    this.cuedVideoId = 0;
     this.element = $('#' + this._id);
-    this.APILoaded = false;
+    this.playerIsReady = false;
     this.track = track;
     this.isCurrent = isCurrent;
     this.volume = 100;
@@ -169,22 +176,22 @@ Player = (function() {
     return this.YT.addEventListener('onStateChange', this.onStateChange);
   };
 
-  Player.prototype.onAPILoad = function() {
-    return this.APILoaded = true;
+  Player.prototype.onReady = function(callback) {
+    if (this.playerIsReady) {
+      return callback();
+    } else {
+      return this.onReadyCallbacks.push(callback);
+    }
   };
 
   Player.prototype.loadVideo = function(id) {
-    if (this.playerIsReady) {
-      this.YT.loadVideoById(id, 0, 'maxres');
-      this.YT.setPlaybackQuality('highres');
-      if (!this.isCurrent) {
-        this.YT.setVolume(0);
-      }
-      if (!this.isCurrent) {
-        return this.YT.seekTo(2, true);
-      }
-    } else {
-      return this.cuedVideoId = id;
+    this.YT.loadVideoById(id, 0, 'maxres');
+    this.YT.setPlaybackQuality('highres');
+    if (!this.isCurrent) {
+      this.YT.setVolume(0);
+    }
+    if (!this.isCurrent) {
+      return this.YT.seekTo(2, true);
     }
   };
 
@@ -261,6 +268,7 @@ PlayerManager = (function() {
     this.callbacks = {
       onVideoChanged: []
     };
+    this.timer = null;
     this.YTAPILoaded = false;
     this.crossfadeShouldStop = false;
     this.players = {
@@ -277,10 +285,28 @@ PlayerManager = (function() {
       };
     })(this), 100);
     document.addEventListener('player_track_change', this.updateCurrentTracks);
+    document.addEventListener('player_play', (function(_this) {
+      return function(e) {
+        var _ref;
+        return (_ref = _this.timer) != null ? _ref.start() : void 0;
+      };
+    })(this));
+    document.addEventListener('player_pause', (function(_this) {
+      return function(e) {
+        var _ref;
+        return (_ref = _this.timer) != null ? _ref.pause() : void 0;
+      };
+    })(this));
+    document.addEventListener('player_seek', (function(_this) {
+      return function(e) {
+        var _ref;
+        return (_ref = _this.timer) != null ? _ref.jumpTo(e.detail[1]) : void 0;
+      };
+    })(this));
   }
 
   PlayerManager.prototype.init = function() {
-    return this.players.current = new Player(null, true);
+    return this.players.current = new Player(null, '', true);
   };
 
   PlayerManager.prototype.setActive = function(isActive) {
@@ -305,8 +331,7 @@ PlayerManager = (function() {
         if ((_ref = _this.players.next) != null) {
           _ref.remove();
         }
-        _this.players.next = new Player(track, false);
-        return _this.players.next.loadVideo(video.id.videoId);
+        return _this.players.next = new Player(track, video.id.videoId, false);
       };
     })(this));
   };
@@ -319,10 +344,13 @@ PlayerManager = (function() {
   };
 
   PlayerManager.prototype.onTrack = function(event) {
-    var id, isFirst;
+    var id, isFirst, _ref;
     id = 0;
     isFirst = this.tracks == null;
     if (isFirst || event.detail[0]._pid !== this.tracks.current._pid) {
+      if ((_ref = this.timer) != null) {
+        _ref.stop();
+      }
       if (this.players.next && this.players.next.track._pid === event.detail[0]._pid) {
         this.players.next.makeCurrent();
         this.crossfade(600, (function(_this) {
@@ -337,15 +365,17 @@ PlayerManager = (function() {
         this.players.current.setTrack(event.detail[0]);
         this.getVideoFromTrack(event.detail[0], (function(_this) {
           return function(video) {
-            var callback, _i, _len, _ref, _results;
-            _this.players.current.loadVideo(video.id.videoId);
+            var callback, _i, _len, _ref1, _results;
+            _this.players.current.onReady(function() {
+              return _this.players.current.loadVideo(video.id.videoId);
+            });
             if (isFirst) {
               _this.players.current.togglePlay(false);
             }
-            _ref = _this.callbacks.onVideoChanged;
+            _ref1 = _this.callbacks.onVideoChanged;
             _results = [];
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              callback = _ref[_i];
+            for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+              callback = _ref1[_i];
               _results.push(callback(video));
             }
             return _results;
@@ -353,6 +383,28 @@ PlayerManager = (function() {
         })(this));
         this.preloadTrack(event.detail[1]);
       }
+      this.players.current.onReady((function(_this) {
+        return function() {
+          return id = setInterval(function() {
+            var length;
+            length = _this.players.current.YT.getDuration() * 1000;
+            if (length === 0) {
+              return;
+            }
+            clearInterval(id);
+            _this.timer = new Timer(length - 100);
+            _this.timer.start();
+            return _this.timer.onFinished(function(stepover) {
+              var context;
+              context = $('#now-playing').contents();
+              return $('#next', context).click();
+            });
+          }, 200);
+        };
+      })(this));
+    } else if (!isFirst && event.detail[0]._pid !== this.tracks.current._pid) {
+      this.players.current.seekTo(0);
+      this.timer.reset();
     }
     return this.updateCurrentTracks(event);
   };
@@ -362,7 +414,6 @@ PlayerManager = (function() {
     $('#player-' + this.players.current._id).css({
       opacity: 0
     });
-    this.players.next.isCrossfading = true;
     targetVolume = this.players.current.getVolume();
     step = 0;
     return interval = setInterval((function(_this) {
@@ -583,6 +634,63 @@ SpotifyUI = (function() {
   };
 
   return SpotifyUI;
+
+})();
+
+var Timer,
+  __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+
+Timer = (function() {
+  function Timer(time) {
+    this.stop = __bind(this.stop, this);
+    this.reset = __bind(this.reset, this);
+    this.pause = __bind(this.pause, this);
+    this.endTime = time;
+    this.currentTime = 0;
+    this.prevTime = 0;
+  }
+
+  Timer.prototype.onFinished = function(callback) {
+    return this.callback = callback;
+  };
+
+  Timer.prototype.jumpTo = function(time) {
+    return this.currentTime = time;
+  };
+
+  Timer.prototype.start = function() {
+    this.prevTime = new Date().getTime();
+    return this.intervalID = setInterval((function(_this) {
+      return function() {
+        var time;
+        time = new Date().getTime();
+        _this.currentTime += time - _this.prevTime;
+        _this.prevTime = time;
+        console.info(_this.endTime - _this.currentTime);
+        if (_this.currentTime >= _this.endTime) {
+          console.log('stopping', _this.intervalID);
+          _this.stop();
+          return _this.callback(_this.currentTime - _this.endTime);
+        }
+      };
+    })(this), 200);
+  };
+
+  Timer.prototype.pause = function() {
+    console.log('stopping', this.intervalID);
+    return clearInterval(this.intervalID);
+  };
+
+  Timer.prototype.reset = function() {
+    return this.currentTime = 0;
+  };
+
+  Timer.prototype.stop = function() {
+    this.pause();
+    return this.currentTime = 0;
+  };
+
+  return Timer;
 
 })();
 

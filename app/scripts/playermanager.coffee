@@ -6,6 +6,8 @@ class PlayerManager
     @callbacks =
       onVideoChanged: []
 
+    @timer = null
+
     @YTAPILoaded = false
     @crossfadeShouldStop = false
 
@@ -27,8 +29,15 @@ class PlayerManager
     # Store the track - even if inactive - so we can start mid-song
     document.addEventListener 'player_track_change', @updateCurrentTracks
 
+    document.addEventListener 'player_play', (e) => @timer?.start()
+    document.addEventListener 'player_pause', (e) => @timer?.pause()
+
+
+    document.addEventListener 'player_seek', (e) =>
+      @timer?.jumpTo e.detail[1]
+
   init: () ->
-    @players.current = new Player(null, true)
+    @players.current = new Player(null, '', true)
 
   setActive: (isActive) ->
     if isActive
@@ -44,8 +53,7 @@ class PlayerManager
   preloadTrack: (track) =>
     @getVideoFromTrack track, (video) =>
       @players.next?.remove()
-      @players.next = new Player(track, false)
-      @players.next.loadVideo video.id.videoId
+      @players.next = new Player(track, video.id.videoId, false)
 
   updateCurrentTracks: (event) =>
     @tracks =
@@ -61,6 +69,9 @@ class PlayerManager
     # Verify that we only reload the players
     # when the tracks actually change
     if isFirst or event.detail[0]._pid != @tracks.current._pid
+
+      @timer?.stop()
+
       # If we've preloaded this track, swap it into the "current" slot
       if @players.next and @players.next.track._pid == event.detail[0]._pid
         #@stopCrossfade()
@@ -80,13 +91,40 @@ class PlayerManager
         @players.current.setTrack event.detail[0]
 
         @getVideoFromTrack event.detail[0], (video) =>
-          @players.current.loadVideo video.id.videoId
+          @players.current.onReady () =>
+            @players.current.loadVideo video.id.videoId
           @players.current.togglePlay false if isFirst
 
           for callback in @callbacks.onVideoChanged
             callback video
 
         @preloadTrack event.detail[1]
+
+      @players.current.onReady () =>
+
+        id = setInterval () =>
+          length = @players.current.YT.getDuration() * 1000
+
+          return if length == 0
+
+          clearInterval id
+
+          @timer = new Timer(length - 100)
+          @timer.start()
+          @timer.onFinished (stepover) =>
+            context = $('#now-playing').contents()
+            $('#next', context).click()
+            #duration = 8000
+            # @players.next.makeCurrent()
+            #@crossfade duration , () ->
+        , 200
+
+
+    # If we're playing the same track again, make sure to rewind
+    else if !isFirst and event.detail[0]._pid != @tracks.current._pid
+      @players.current.seekTo 0
+      @timer.reset()
+
     @updateCurrentTracks event
 
   # Transition the volume of the next track into the initial
@@ -95,8 +133,6 @@ class PlayerManager
   # When we're finished, fire the onFinished callback
   crossfade: (duration, onFinished) ->
     $('#player-' + @players.current._id).css opacity: 0
-
-    @players.next.isCrossfading = true
 
     targetVolume = @players.current.getVolume()
     step = 0
