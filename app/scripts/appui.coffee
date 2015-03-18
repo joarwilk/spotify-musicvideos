@@ -1,4 +1,4 @@
-# Handles buttons and popups inside the watch tab
+# Handles buttons, mouse events and popups inside the watch tab
 
 class AppUI
 
@@ -20,8 +20,10 @@ class AppUI
         @toggleFullscreen()
         @toggleExpanded()
 
+    context = $('#app-player').contents()
+
     $(window).mousemove $.throttle 100, @onMouseMove
-    $(window, $('#app-player').contents()).mousemove () -> console.info 'mousemvvmeiomdas'
+    $('body', context).mousemove () -> console.info 'mousemvvmeiomdas'
 
     document.addEventListener 'player_track_change', @onTrack
 
@@ -71,4 +73,6 @@ class AppUI
 
     $('body').toggleClass 'watchmode', @isExpanded
 
-    $(window).resize()
+    setTimeout () ->
+      $(window).resize()
+    , 500

@@ -12,7 +12,7 @@ AppUI = (function() {
   }
 
   AppUI.prototype.init = function() {
-    var contexts;
+    var context, contexts;
     contexts = $('#app-player').add($('#now-playing-widgets iframe'));
     $(window).keydown((function(_this) {
       return function(e) {
@@ -25,8 +25,9 @@ AppUI = (function() {
         }
       };
     })(this));
+    context = $('#app-player').contents();
     $(window).mousemove($.throttle(100, this.onMouseMove));
-    $(window, $('#app-player').contents()).mousemove(function() {
+    $('body', context).mousemove(function() {
       return console.info('mousemvvmeiomdas');
     });
     return document.addEventListener('player_track_change', this.onTrack);
@@ -80,7 +81,9 @@ AppUI = (function() {
   AppUI.prototype.toggleExpanded = function() {
     this.isExpanded = !this.isExpanded;
     $('body').toggleClass('watchmode', this.isExpanded);
-    return $(window).resize();
+    return setTimeout(function() {
+      return $(window).resize();
+    }, 500);
   };
 
   return AppUI;
@@ -137,6 +140,7 @@ Player = (function() {
     this.APILoaded = false;
     this.track = track;
     this.isCurrent = isCurrent;
+    this.volume = 100;
   }
 
   Player.prototype.doBinds = function() {
@@ -176,24 +180,33 @@ Player = (function() {
       if (!this.isCurrent) {
         this.YT.setVolume(0);
       }
-      return this.YT.seekTo(1, true);
+      if (!this.isCurrent) {
+        return this.YT.seekTo(2, true);
+      }
     } else {
       return this.cuedVideoId = id;
     }
   };
 
-  Player.prototype.togglePlay = function(play) {};
+  Player.prototype.togglePlay = function(play) {
+    if (play) {
+      return this.YT.playVideo();
+    } else {
+      return this.YT.pauseVideo();
+    }
+  };
 
   Player.prototype.seekTo = function(time) {
     return this.YT.seekTo(time, true);
   };
 
   Player.prototype.setVolume = function(volume) {
+    this.volume = volume;
     return this.YT.setVolume(volume);
   };
 
   Player.prototype.getVolume = function() {
-    return this.YT.getVolume();
+    return this.volume;
   };
 
   Player.prototype.onStateChange = function(state) {
@@ -254,7 +267,7 @@ PlayerManager = (function() {
       current: null,
       next: null
     };
-    this.tracks = {};
+    this.tracks = null;
     YTAPILoadInterval = setInterval((function(_this) {
       return function() {
         if (window.YT && window.YT.Player) {
@@ -274,7 +287,7 @@ PlayerManager = (function() {
     if (isActive) {
       document.removeEventListener('player_track_change', this.updateCurrentTracks);
       document.addEventListener('player_track_change', this.onTrack);
-      if (this.tracks.current) {
+      if (this.tracks != null) {
         return this.onTrack({
           detail: [this.tracks.current, this.tracks.next]
         });
@@ -306,9 +319,10 @@ PlayerManager = (function() {
   };
 
   PlayerManager.prototype.onTrack = function(event) {
-    var id;
+    var id, isFirst;
     id = 0;
-    if ((this.tracks.current != null) && !(event.detail[0]._pid === this.tracks.current._pid)) {
+    isFirst = this.tracks == null;
+    if (isFirst || event.detail[0]._pid !== this.tracks.current._pid) {
       if (this.players.next && this.players.next.track._pid === event.detail[0]._pid) {
         this.players.next.makeCurrent();
         this.crossfade(600, (function(_this) {
@@ -325,6 +339,9 @@ PlayerManager = (function() {
           return function(video) {
             var callback, _i, _len, _ref, _results;
             _this.players.current.loadVideo(video.id.videoId);
+            if (isFirst) {
+              _this.players.current.togglePlay(false);
+            }
             _ref = _this.callbacks.onVideoChanged;
             _results = [];
             for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -356,7 +373,6 @@ PlayerManager = (function() {
           return;
         }
         progress = (step++ * CROSSFADE_STEP_SIZE) / duration;
-        console.info(progress, (1 - progress) * targetVolume);
         if (progress >= 1) {
           clearInterval(interval);
           return onFinished();

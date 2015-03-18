@@ -39,6 +39,7 @@ class Player
     @APILoaded = false
     @track = track
     @isCurrent = isCurrent
+    @volume = 100
 
 
   doBinds: () ->
@@ -59,21 +60,22 @@ class Player
       @YT.loadVideoById id, 0, 'maxres'
       @YT.setPlaybackQuality 'highres'
       @YT.setVolume 0 unless @isCurrent
-      @YT.seekTo 1, true
+      @YT.seekTo 2, true unless @isCurrent
     else
       @cuedVideoId = id
 
   togglePlay: (play) ->
-
+    if play then @YT.playVideo() else @YT.pauseVideo()
 
   seekTo: (time) =>
     @YT.seekTo time, true
 
   setVolume: (volume) =>
+    @volume = volume
     @YT.setVolume volume
 
   getVolume: () =>
-    return @YT.getVolume()
+    return @volume
 
   onStateChange: (state) =>
     if state.data == YT.PlayerState.PLAYING and !@isCurrent

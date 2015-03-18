@@ -35,7 +35,6 @@ do ->
     manager.onVideoChanged appUI.onVideoChanged
     manager.onVideoChanged spotify.onVideoChanged
 
-
     spotify.onUserNavigated (path) ->
       if path isnt '/watch'
         ui.hideWatchTab()

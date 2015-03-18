@@ -14,7 +14,7 @@ class PlayerManager
       next: null
     }
 
-    @tracks = {}
+    @tracks = null
 
     YTAPILoadInterval = setInterval () =>
       if window.YT && window.YT.Player
@@ -35,7 +35,7 @@ class PlayerManager
       document.removeEventListener 'player_track_change', @updateCurrentTracks
       document.addEventListener 'player_track_change', @onTrack
 
-      if @tracks.current
+      if @tracks?
         @onTrack detail: [@tracks.current, @tracks.next]
     else
       document.addEventListener 'player_track_change', @updateCurrentTracks
@@ -55,10 +55,12 @@ class PlayerManager
   onTrack: (event) =>
     id = 0
 
-    # Sometimes the track event is fired multiple times
-    # this if statement verifies that we only refresh the players
+    # Is this the first track this session?
+    isFirst = !@tracks?
+
+    # Verify that we only reload the players
     # when the tracks actually change
-    if @tracks.current? and !(event.detail[0]._pid == @tracks.current._pid)
+    if isFirst or event.detail[0]._pid != @tracks.current._pid
       # If we've preloaded this track, swap it into the "current" slot
       if @players.next and @players.next.track._pid == event.detail[0]._pid
         #@stopCrossfade()
@@ -79,6 +81,7 @@ class PlayerManager
 
         @getVideoFromTrack event.detail[0], (video) =>
           @players.current.loadVideo video.id.videoId
+          @players.current.togglePlay false if isFirst
 
           for callback in @callbacks.onVideoChanged
             callback video
@@ -103,7 +106,6 @@ class PlayerManager
         return
 
       progress = (step++ * CROSSFADE_STEP_SIZE) / duration
-      console.info progress, (1 - progress) * targetVolume
 
       if progress >= 1
         clearInterval interval
