@@ -19,6 +19,7 @@
   height: 0
   padding-bottom: 56.25%
   position: relative
+  transition: all 0.2s
 
   iframe
     width: 100%
@@ -31,6 +32,14 @@
   iframe:first-of-type
     left: 0
     right: auto
+
+.video-overlay
+  position: absolute
+  top: 0
+  left: 0
+  height: 100%
+  width: 100%
+  z-index: 2
 
 .watch-controls
   position: absolute
@@ -59,10 +68,10 @@
   transition: right 0.2s, left 0.2s
 
 #main-nav
-  transition: opacity 0.4s
+  transition: opacity .3s
 
 #now-playing
-  transition: opacity 0.4s, right 0.3s !important
+  transition: opacity .3s, right 0.3s !important
 
 .watchmode
   #section-watch .rooot
@@ -76,16 +85,22 @@
     display: none
 
   .video-wrapper
-    top: 0 !important
-    transition: all 0.2s
+    //top: 50% !important
+    //margin: auto
+    //transform: translate(0, -50%);
 
   #main-nav, #now-playing
-    opacity: 0.5
+    opacity: 0.6
 
     &:hover
       opacity: 0.95
 
 
+  &.hide-controls
+    cursor: none !important
+
+    #main-nav, #now-playing
+      opacity: 0
 
 
 

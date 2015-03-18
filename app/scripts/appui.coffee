@@ -6,18 +6,24 @@ class AppUI
     @isExpanded = false
     @isFullscreen = false
 
+    @mouseActivityTimeout = 0
+
     @wrapperUI = wrapperUI
 
   init: () ->
+    contexts = $('#app-player').add($('#now-playing-widgets iframe'))
+
     $(window).keydown (e) =>
       @toggleExpanded() if e.keyCode is 69
-
 
       if e.keyCode is 70
         @toggleFullscreen()
         @toggleExpanded()
-    $(window).mousemove () ->
-      console.log 'mousemoves'
+
+    $(window).mousemove $.throttle 100, @onMouseMove
+    $(window, $('#app-player').contents()).mousemove () -> console.info 'mousemvvmeiomdas'
+
+    document.addEventListener 'player_track_change', @onTrack
 
   onTrackChange: (track) ->
     $('#popup-name').html(track.name)
@@ -29,6 +35,17 @@ class AppUI
 
   showTrackBubble: () ->
 
+  onMouseMove: () =>
+    $('body').removeClass 'hide-controls'
+
+    clearTimeout @mouseActivityTimeout
+    @mouseActivityTimeout = setTimeout () ->
+      $('body').addClass 'hide-controls'
+    , 2000
+
+  onTrack: (event) =>
+    @onTrackChange event.detail[0]
+    setTimeout @showTrackBubble(event.detail[0]), 3000
 
   toggleFullscreen: () ->
     @toggleExpanded()
@@ -49,8 +66,9 @@ class AppUI
       else if document.webkitExitFullscreen
         document.webkitExitFullscreen()
 
-
   toggleExpanded: () ->
     @isExpanded = !@isExpanded
 
     $('body').toggleClass 'watchmode', @isExpanded
+
+    $(window).resize()

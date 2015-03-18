@@ -18,6 +18,7 @@
   height: 0;
   padding-bottom: 56.25%;
   position: relative;
+  transition: all 0.2s;
 }
 #section-watch .video-wrapper iframe {
   width: 100%;
@@ -30,6 +31,14 @@
 #section-watch .video-wrapper iframe:first-of-type {
   left: 0;
   right: auto;
+}
+.video-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  z-index: 2;
 }
 .watch-controls {
   position: absolute;
@@ -58,10 +67,10 @@
   transition: right 0.2s, left 0.2s;
 }
 #main-nav {
-  transition: opacity 0.4s;
+  transition: opacity 0.3s;
 }
 #now-playing {
-  transition: opacity 0.4s, right 0.3s !important;
+  transition: opacity 0.3s, right 0.3s !important;
 }
 .watchmode #section-watch .rooot {
   padding: 0 300px 0 100px;
@@ -73,15 +82,18 @@
 .watchmode #suggest-area {
   display: none;
 }
-.watchmode .video-wrapper {
-  top: 0 !important;
-  transition: all 0.2s;
-}
 .watchmode #main-nav,
 .watchmode #now-playing {
-  opacity: 0.5;
+  opacity: 0.6;
 }
 .watchmode #main-nav:hover,
 .watchmode #now-playing:hover {
   opacity: 0.95;
+}
+.watchmode.hide-controls {
+  cursor: none !important;
+}
+.watchmode.hide-controls #main-nav,
+.watchmode.hide-controls #now-playing {
+  opacity: 0;
 }

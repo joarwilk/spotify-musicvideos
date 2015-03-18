@@ -1,13 +1,19 @@
-var AppUI;
+var AppUI,
+  __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
 AppUI = (function() {
   function AppUI(wrapperUI) {
+    this.onTrack = __bind(this.onTrack, this);
+    this.onMouseMove = __bind(this.onMouseMove, this);
     this.isExpanded = false;
     this.isFullscreen = false;
+    this.mouseActivityTimeout = 0;
     this.wrapperUI = wrapperUI;
   }
 
   AppUI.prototype.init = function() {
+    var contexts;
+    contexts = $('#app-player').add($('#now-playing-widgets iframe'));
     $(window).keydown((function(_this) {
       return function(e) {
         if (e.keyCode === 69) {
@@ -19,9 +25,11 @@ AppUI = (function() {
         }
       };
     })(this));
-    return $(window).mousemove(function() {
-      return console.log('mousemoves');
+    $(window).mousemove($.throttle(100, this.onMouseMove));
+    $(window, $('#app-player').contents()).mousemove(function() {
+      return console.info('mousemvvmeiomdas');
     });
+    return document.addEventListener('player_track_change', this.onTrack);
   };
 
   AppUI.prototype.onTrackChange = function(track) {
@@ -35,6 +43,19 @@ AppUI = (function() {
   };
 
   AppUI.prototype.showTrackBubble = function() {};
+
+  AppUI.prototype.onMouseMove = function() {
+    $('body').removeClass('hide-controls');
+    clearTimeout(this.mouseActivityTimeout);
+    return this.mouseActivityTimeout = setTimeout(function() {
+      return $('body').addClass('hide-controls');
+    }, 2000);
+  };
+
+  AppUI.prototype.onTrack = function(event) {
+    this.onTrackChange(event.detail[0]);
+    return setTimeout(this.showTrackBubble(event.detail[0]), 3000);
+  };
 
   AppUI.prototype.toggleFullscreen = function() {
     var doc;
@@ -58,7 +79,8 @@ AppUI = (function() {
 
   AppUI.prototype.toggleExpanded = function() {
     this.isExpanded = !this.isExpanded;
-    return $('body').toggleClass('watchmode', this.isExpanded);
+    $('body').toggleClass('watchmode', this.isExpanded);
+    return $(window).resize();
   };
 
   return AppUI;
