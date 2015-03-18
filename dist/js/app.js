@@ -7,6 +7,23 @@ AppUI = (function() {
     this.wrapperUI = wrapperUI;
   }
 
+  AppUI.prototype.init = function() {
+    $(window).keydown((function(_this) {
+      return function(e) {
+        if (e.keyCode === 69) {
+          _this.toggleExpanded();
+        }
+        if (e.keyCode === 70) {
+          _this.toggleFullscreen();
+          return _this.toggleExpanded();
+        }
+      };
+    })(this));
+    return $(window).mousemove(function() {
+      return console.log('mousemoves');
+    });
+  };
+
   AppUI.prototype.onTrackChange = function(track) {
     $('#popup-name').html(track.name);
     return $('#popup-artist').html(track.artistName);
@@ -41,7 +58,7 @@ AppUI = (function() {
 
   AppUI.prototype.toggleExpanded = function() {
     this.isExpanded = !this.isExpanded;
-    return this.wrapperUI.elements.tab.toggleClass('expanded', this.isExpanded);
+    return $('body').toggleClass('watchmode', this.isExpanded);
   };
 
   return AppUI;
@@ -60,10 +77,11 @@ Player = (function() {
     this.makeCurrent = __bind(this.makeCurrent, this);
     this.setTrack = __bind(this.setTrack, this);
     this.onStateChange = __bind(this.onStateChange, this);
+    this.getVolume = __bind(this.getVolume, this);
     this.setVolume = __bind(this.setVolume, this);
+    this.seekTo = __bind(this.seekTo, this);
     var playerLoadInterval;
     this._id = Player.ID++;
-    console.info('player', this._id, isCurrent, track);
     $('.video-wrapper').prepend('<div id="player-' + this._id + '"></div>');
     this.YT = new YT.Player("player-" + this._id, {
       videoId: '',
@@ -75,7 +93,8 @@ Player = (function() {
         iv_load_policy: 3,
         modestbranding: 1,
         hd: 1,
-        showinfo: 0
+        showinfo: 0,
+        start: 1
       }
     });
     playerLoadInterval = setInterval((function(_this) {
@@ -99,11 +118,6 @@ Player = (function() {
   }
 
   Player.prototype.doBinds = function() {
-    document.addEventListener('player_seek', (function(_this) {
-      return function(e) {
-        return _this.seekTo(e.detail[0]);
-      };
-    })(this));
     document.addEventListener('player_set_volume', (function(_this) {
       return function(e) {
         return _this.setVolume(e.detail[1] * 100);
@@ -119,6 +133,13 @@ Player = (function() {
         return _this.togglePlay(false);
       };
     })(this));
+    if (this.isCurrent) {
+      document.addEventListener('player_seek', (function(_this) {
+        return function(e) {
+          return _this.seekTo(e.detail[1] / 1000);
+        };
+      })(this));
+    }
     return this.YT.addEventListener('onStateChange', this.onStateChange);
   };
 
@@ -127,12 +148,14 @@ Player = (function() {
   };
 
   Player.prototype.loadVideo = function(id) {
-    console.error('loading video');
     if (this.playerIsReady) {
       this.YT.loadVideoById(id, 0, 'maxres');
-      return this.YT.setPlaybackQuality('highres');
+      this.YT.setPlaybackQuality('highres');
+      if (!this.isCurrent) {
+        this.YT.setVolume(0);
+      }
+      return this.YT.seekTo(1, true);
     } else {
-      console.info('Cued video', id, this._id);
       return this.cuedVideoId = id;
     }
   };
@@ -140,7 +163,6 @@ Player = (function() {
   Player.prototype.togglePlay = function(play) {};
 
   Player.prototype.seekTo = function(time) {
-    console.info('seek', time);
     return this.YT.seekTo(time, true);
   };
 
@@ -148,8 +170,11 @@ Player = (function() {
     return this.YT.setVolume(volume);
   };
 
+  Player.prototype.getVolume = function() {
+    return this.YT.getVolume();
+  };
+
   Player.prototype.onStateChange = function(state) {
-    console.log(this.isCurrent);
     if (state.data === YT.PlayerState.PLAYING && !this.isCurrent) {
       return this.YT.pauseVideo();
     }
@@ -161,7 +186,12 @@ Player = (function() {
 
   Player.prototype.makeCurrent = function() {
     this.isCurrent = true;
-    return this.YT.playVideo();
+    this.YT.playVideo();
+    return document.addEventListener('player_seek', (function(_this) {
+      return function(e) {
+        return _this.seekTo(e.detail[1] / 1000);
+      };
+    })(this));
   };
 
   Player.prototype.onVideoLoaded = function() {};
@@ -186,7 +216,7 @@ var PlayerManager,
 PlayerManager = (function() {
   var CROSSFADE_STEP_SIZE;
 
-  CROSSFADE_STEP_SIZE = 25;
+  CROSSFADE_STEP_SIZE = 50;
 
   function PlayerManager() {
     this.onTrack = __bind(this.onTrack, this);
@@ -258,11 +288,15 @@ PlayerManager = (function() {
     id = 0;
     if ((this.tracks.current != null) && !(event.detail[0]._pid === this.tracks.current._pid)) {
       if (this.players.next && this.players.next.track._pid === event.detail[0]._pid) {
-        this.players.current.remove();
-        this.players.current = this.players.next;
-        this.players.next = null;
-        this.players.current.makeCurrent();
-        this.stopCrossfade();
+        this.players.next.makeCurrent();
+        this.crossfade(600, (function(_this) {
+          return function() {
+            _this.players.current.remove();
+            _this.players.current = _this.players.next;
+            _this.players.next = null;
+            return _this.preloadTrack(event.detail[1]);
+          };
+        })(this));
       } else {
         this.players.current.setTrack(event.detail[0]);
         this.getVideoFromTrack(event.detail[0], (function(_this) {
@@ -278,17 +312,19 @@ PlayerManager = (function() {
             return _results;
           };
         })(this));
+        this.preloadTrack(event.detail[1]);
       }
-      this.preloadTrack(event.detail[1]);
     }
     return this.updateCurrentTracks(event);
   };
 
   PlayerManager.prototype.crossfade = function(duration, onFinished) {
-    var interval, step;
-    this.players.current.element.fadeOut(duration);
-    this.players.next.element.fadeIn(duration);
+    var interval, step, targetVolume;
+    $('#player-' + this.players.current._id).css({
+      opacity: 0
+    });
     this.players.next.isCrossfading = true;
+    targetVolume = this.players.current.getVolume();
     step = 0;
     return interval = setInterval((function(_this) {
       return function() {
@@ -298,12 +334,13 @@ PlayerManager = (function() {
           return;
         }
         progress = (step++ * CROSSFADE_STEP_SIZE) / duration;
+        console.info(progress, (1 - progress) * targetVolume);
         if (progress >= 1) {
           clearInterval(interval);
           return onFinished();
         } else {
-          current.setVolume((1 - progress) * current.getVolume());
-          return next.setVolume(progress.current.getVolume());
+          _this.players.current.setVolume(parseInt((1 - progress) * targetVolume));
+          return _this.players.next.setVolume(parseInt(progress * targetVolume));
         }
       };
     })(this), CROSSFADE_STEP_SIZE);
@@ -533,6 +570,7 @@ if (window.location.pathname === '/watch') {
   $(document).ready(function() {
     ui.attachMenuItem();
     ui.createWatchTab();
+    appUI.init();
     if (loadImmediately) {
       return $('#overlay').show();
     }
@@ -548,12 +586,16 @@ if (window.location.pathname === '/watch') {
       }
     });
     if (loadImmediately) {
-      console.info('immideatl');
       $('#overlay').hide();
       $('#section-user').addClass('hidden');
       ui.showWatchTab();
       manager.init();
       return manager.setActive(true);
+    } else {
+      return ui.onTabShown(function() {
+        manager.init();
+        return manager.setActive(true);
+      });
     }
   });
 })();

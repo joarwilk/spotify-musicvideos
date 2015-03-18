@@ -24,6 +24,8 @@ do ->
     ui.attachMenuItem()
     ui.createWatchTab()
 
+    appUI.init()
+
     if loadImmediately
       $('#overlay').show()
 
@@ -39,10 +41,15 @@ do ->
         ui.hideWatchTab()
 
     if loadImmediately
-      console.info 'immideatl'
       $('#overlay').hide()
       $('#section-user').addClass 'hidden' # User tab is open by defaut
       ui.showWatchTab()
 
       manager.init()
       manager.setActive true
+    else
+      ui.onTabShown () ->
+        manager.init()
+        manager.setActive true
+
+

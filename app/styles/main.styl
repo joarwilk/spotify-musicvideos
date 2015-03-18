@@ -26,10 +26,19 @@
     position: absolute
     top: 0
     right: 0
+    transition: opacity 0.6s
 
   iframe:first-of-type
     left: 0
     right: auto
+
+.watch-controls
+  position: absolute
+  display: none
+  bottom: 0
+  height: 200px
+  width: 100%
+  background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.7) 100%)
 
 #primary-wrapper
   width: 45%
@@ -45,3 +54,42 @@
 
 .track-popup
   display: none
+
+#main
+  transition: right 0.2s, left 0.2s
+
+#main-nav
+  transition: opacity 0.4s
+
+#now-playing
+  transition: opacity 0.4s, right 0.3s !important
+
+.watchmode
+  #section-watch .rooot
+    padding: 0 300px 0 100px
+
+  #main
+    right: 0 !important
+    left: 0 !important
+
+  #suggest-area
+    display: none
+
+  .video-wrapper
+    top: 0 !important
+    transition: all 0.2s
+
+  #main-nav, #now-playing
+    opacity: 0.5
+
+    &:hover
+      opacity: 0.95
+
+
+
+
+
+
+
+
+

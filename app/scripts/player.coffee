@@ -3,10 +3,7 @@ class Player
   @ID = 0
 
   constructor: (track, isCurrent) ->
-
     @_id = Player.ID++
-
-    console.info 'player', @_id, isCurrent, track
 
     $('.video-wrapper').prepend('<div id="player-' + @_id + '"></div>')
 
@@ -15,12 +12,13 @@ class Player
       playerVars:
         autoplay: 0
         controls: 0
-        rel : 0
+        rel : 0 # Hide related videos
         disablekb: 1 # Disable Keyboard
         iv_load_policy: 3 # Disable annotations
         modestbranding : 1 # Hide some ui items
         hd: 1 # Highest Quality
         showinfo: 0 # Hide video information
+        start: 1 # The first second is very commonly black and mute
     }
 
     playerLoadInterval = setInterval () =>
@@ -44,10 +42,12 @@ class Player
 
 
   doBinds: () ->
-    document.addEventListener 'player_seek', (e) => @seekTo e.detail[0]
     document.addEventListener 'player_set_volume', (e) => @setVolume e.detail[1] * 100
     document.addEventListener 'player_play', (e) => @togglePlay true
     document.addEventListener 'player_pause', (e) => @togglePlay false
+
+    if @isCurrent
+      document.addEventListener 'player_seek', (e) => @seekTo e.detail[1] / 1000
 
     @YT.addEventListener 'onStateChange', @onStateChange
 
@@ -55,26 +55,27 @@ class Player
     @APILoaded = true
 
   loadVideo: (id) ->
-    console.error 'loading video'
     if @playerIsReady
       @YT.loadVideoById id, 0, 'maxres'
       @YT.setPlaybackQuality 'highres'
+      @YT.setVolume 0 unless @isCurrent
+      @YT.seekTo 1, true
     else
-      console.info 'Cued video', id, @_id
       @cuedVideoId = id
 
   togglePlay: (play) ->
 
 
-  seekTo: (time) ->
-    console.info 'seek', time
+  seekTo: (time) =>
     @YT.seekTo time, true
 
   setVolume: (volume) =>
     @YT.setVolume volume
 
+  getVolume: () =>
+    return @YT.getVolume()
+
   onStateChange: (state) =>
-    console.log @isCurrent
     if state.data == YT.PlayerState.PLAYING and !@isCurrent
       @YT.pauseVideo()
 
@@ -84,6 +85,8 @@ class Player
   makeCurrent: () =>
     @isCurrent = true
     @YT.playVideo()
+
+    document.addEventListener 'player_seek', (e) => @seekTo e.detail[1] / 1000
 
   onVideoLoaded: () ->
 

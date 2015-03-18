@@ -8,6 +8,17 @@ class AppUI
 
     @wrapperUI = wrapperUI
 
+  init: () ->
+    $(window).keydown (e) =>
+      @toggleExpanded() if e.keyCode is 69
+
+
+      if e.keyCode is 70
+        @toggleFullscreen()
+        @toggleExpanded()
+    $(window).mousemove () ->
+      console.log 'mousemoves'
+
   onTrackChange: (track) ->
     $('#popup-name').html(track.name)
     $('#popup-artist').html(track.artistName)
@@ -42,4 +53,4 @@ class AppUI
   toggleExpanded: () ->
     @isExpanded = !@isExpanded
 
-    @wrapperUI.elements.tab.toggleClass 'expanded', @isExpanded
+    $('body').toggleClass 'watchmode', @isExpanded

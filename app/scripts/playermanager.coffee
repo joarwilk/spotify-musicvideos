@@ -1,6 +1,6 @@
 class PlayerManager
 
-  CROSSFADE_STEP_SIZE = 25
+  CROSSFADE_STEP_SIZE = 50
 
   constructor: () ->
     @callbacks =
@@ -61,14 +61,18 @@ class PlayerManager
     if @tracks.current? and !(event.detail[0]._pid == @tracks.current._pid)
       # If we've preloaded this track, swap it into the "current" slot
       if @players.next and @players.next.track._pid == event.detail[0]._pid
-        @players.current.remove()
+        #@stopCrossfade()
 
-        # Make the preloaded player the new main player
-        @players.current = @players.next
-        @players.next = null
-        @players.current.makeCurrent()
+        @players.next.makeCurrent()
+        @crossfade 600, () =>
+          @players.current.remove()
 
-        @stopCrossfade()
+          # Make the preloaded player the new main player
+          @players.current = @players.next
+          @players.next = null
+
+          @preloadTrack event.detail[1]
+
       # if not, load the video into the current player
       else
         @players.current.setTrack event.detail[0]
@@ -79,7 +83,7 @@ class PlayerManager
           for callback in @callbacks.onVideoChanged
             callback video
 
-      @preloadTrack event.detail[1]
+        @preloadTrack event.detail[1]
     @updateCurrentTracks event
 
   # Transition the volume of the next track into the initial
@@ -87,11 +91,11 @@ class PlayerManager
   # the current track.
   # When we're finished, fire the onFinished callback
   crossfade: (duration, onFinished) ->
-    @players.current.element.fadeOut duration
-    @players.next.element.fadeIn duration
+    $('#player-' + @players.current._id).css opacity: 0
 
     @players.next.isCrossfading = true
 
+    targetVolume = @players.current.getVolume()
     step = 0
     interval = setInterval () =>
       if @crossfadeShouldStop
@@ -99,13 +103,14 @@ class PlayerManager
         return
 
       progress = (step++ * CROSSFADE_STEP_SIZE) / duration
+      console.info progress, (1 - progress) * targetVolume
 
       if progress >= 1
         clearInterval interval
         onFinished()
       else
-        current.setVolume (1 - progress) * current.getVolume()
-        next.setVolume progress.current.getVolume()
+        @players.current.setVolume parseInt((1 - progress) * targetVolume)
+        @players.next.setVolume parseInt(progress * targetVolume)
 
     , CROSSFADE_STEP_SIZE
 
