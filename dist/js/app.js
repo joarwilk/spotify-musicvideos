@@ -151,11 +151,11 @@ Player = (function() {
   }
 
   Player.prototype.doBinds = function() {
-    document.addEventListener('player_set_volume', (function(_this) {
+    document.addEventListener('player_set_video_volume', $.throttle(50, (function(_this) {
       return function(e) {
         return _this.setVolume(e.detail[1] * 100);
       };
-    })(this));
+    })(this)));
     document.addEventListener('player_play', (function(_this) {
       return function(e) {
         return _this.togglePlay(true);
@@ -666,9 +666,7 @@ Timer = (function() {
         time = new Date().getTime();
         _this.currentTime += time - _this.prevTime;
         _this.prevTime = time;
-        console.info(_this.endTime - _this.currentTime);
         if (_this.currentTime >= _this.endTime) {
-          console.log('stopping', _this.intervalID);
           _this.stop();
           return _this.callback(_this.currentTime - _this.endTime);
         }
@@ -677,7 +675,6 @@ Timer = (function() {
   };
 
   Timer.prototype.pause = function() {
-    console.log('stopping', this.intervalID);
     return clearInterval(this.intervalID);
   };
 

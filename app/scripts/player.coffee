@@ -42,7 +42,7 @@ class Player
 
 
   doBinds: () ->
-    document.addEventListener 'player_set_volume', (e) => @setVolume e.detail[1] * 100
+    document.addEventListener 'player_set_video_volume', $.throttle 50, (e) => @setVolume e.detail[1] * 100
     document.addEventListener 'player_play', (e) => @togglePlay true
     document.addEventListener 'player_pause', (e) => @togglePlay false
 

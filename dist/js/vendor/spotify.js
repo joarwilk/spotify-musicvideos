@@ -3106,9 +3106,14 @@
       ]);
     };
     Player.prototype.setVolume = function (volume) {
-      return promisedRequest(this, 'player_set_volume', [
+      promisedRequest(this, 'player_set_video_volume', [
         this.id,
         volume
+      ]);
+
+      return promisedRequest(this, 'player_set_volume', [
+        this.id,
+        0
       ]);
     };
     Player.prototype.setRepeat = function (enabled) {

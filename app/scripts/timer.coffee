@@ -20,16 +20,12 @@ class Timer
       @currentTime += time - @prevTime
       @prevTime = time
 
-      console.info @endTime - @currentTime
-
       if @currentTime >= @endTime
-        console.log 'stopping', @intervalID
         @stop()
         @callback(@currentTime - @endTime)
     , 200
 
   pause: () =>
-    console.log 'stopping', @intervalID
     clearInterval @intervalID
 
   reset: () =>
