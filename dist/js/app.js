@@ -2,12 +2,21 @@ var AppUI,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
 AppUI = (function() {
+  var POPUP_TRANSITION_DURATION;
+
+  POPUP_TRANSITION_DURATION = 300;
+
   function AppUI(wrapperUI) {
-    this.onTrack = __bind(this.onTrack, this);
     this.onMouseMove = __bind(this.onMouseMove, this);
+    this.onTrackChange = __bind(this.onTrackChange, this);
+    this.onTrack = __bind(this.onTrack, this);
     this.isExpanded = false;
     this.isFullscreen = false;
     this.mouseActivityTimeout = 0;
+    this.popupTimeout = {
+      show: 0,
+      hide: 0
+    };
     this.wrapperUI = wrapperUI;
   }
 
@@ -33,9 +42,27 @@ AppUI = (function() {
     return document.addEventListener('player_track_change', this.onTrack);
   };
 
+  AppUI.prototype.onTrack = function(event) {
+    return this.onTrackChange(event.detail[0]);
+  };
+
   AppUI.prototype.onTrackChange = function(track) {
-    $('#popup-name').html(track.name);
-    return $('#popup-artist').html(track.artistName);
+    if (!this.isExpanded) {
+      return;
+    }
+    $('body').removeClass('show-popup');
+    setTimeout(function() {
+      $('#popup-name').html(track.name);
+      return $('#popup-artist').html(track.artistName);
+    }, POPUP_TRANSITION_DURATION);
+    clearTimeout(this.popupTimeout.show);
+    clearTimeout(this.popupTimeout.hide);
+    this.popupTimeout.show = setTimeout(function() {
+      return $('body').addClass('show-popup');
+    }, 4000);
+    return this.popupTimeout.hide = setTimeout(function() {
+      return $('body').removeClass('show-popup');
+    }, 8000);
   };
 
   AppUI.prototype.onVideoChanged = function(video) {
@@ -43,19 +70,12 @@ AppUI = (function() {
     return $('#channel-name').html(video.snippet.channelTitle);
   };
 
-  AppUI.prototype.showTrackBubble = function() {};
-
   AppUI.prototype.onMouseMove = function() {
     $('body').removeClass('hide-controls');
     clearTimeout(this.mouseActivityTimeout);
     return this.mouseActivityTimeout = setTimeout(function() {
       return $('body').addClass('hide-controls');
     }, 2000);
-  };
-
-  AppUI.prototype.onTrack = function(event) {
-    this.onTrackChange(event.detail[0]);
-    return setTimeout(this.showTrackBubble(event.detail[0]), 3000);
   };
 
   AppUI.prototype.toggleFullscreen = function() {
@@ -228,6 +248,7 @@ Player = (function() {
 
   Player.prototype.makeCurrent = function() {
     this.isCurrent = true;
+    this.YT.setVolume(0);
     this.YT.playVideo();
     return document.addEventListener('player_seek', (function(_this) {
       return function(e) {
@@ -396,6 +417,7 @@ PlayerManager = (function() {
             _this.timer.start();
             return _this.timer.onFinished(function(stepover) {
               var context;
+              console.info('finished');
               context = $('#now-playing').contents();
               return $('#next', context).click();
             });
@@ -424,7 +446,7 @@ PlayerManager = (function() {
           return;
         }
         progress = (step++ * CROSSFADE_STEP_SIZE) / duration;
-        if (progress >= 1) {
+        if (progress > 1) {
           clearInterval(interval);
           return onFinished();
         } else {
@@ -666,6 +688,7 @@ Timer = (function() {
         time = new Date().getTime();
         _this.currentTime += time - _this.prevTime;
         _this.prevTime = time;
+        console.info(_this.endTime - _this.currentTime);
         if (_this.currentTime >= _this.endTime) {
           _this.stop();
           return _this.callback(_this.currentTime - _this.endTime);

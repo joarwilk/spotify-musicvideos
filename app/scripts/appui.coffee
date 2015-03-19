@@ -2,11 +2,17 @@
 
 class AppUI
 
+  POPUP_TRANSITION_DURATION = 300
+
   constructor: (wrapperUI) ->
     @isExpanded = false
     @isFullscreen = false
 
     @mouseActivityTimeout = 0
+
+    @popupTimeout =
+      show: 0
+      hide: 0
 
     @wrapperUI = wrapperUI
 
@@ -27,15 +33,33 @@ class AppUI
 
     document.addEventListener 'player_track_change', @onTrack
 
-  onTrackChange: (track) ->
-    $('#popup-name').html(track.name)
-    $('#popup-artist').html(track.artistName)
+  onTrack: (event) =>
+    @onTrackChange event.detail[0]
+
+  onTrackChange: (track) =>
+    return unless @isExpanded
+
+    $('body').removeClass 'show-popup'
+
+    setTimeout () ->
+      $('#popup-name').html(track.name)
+      $('#popup-artist').html(track.artistName)
+    , POPUP_TRANSITION_DURATION
+
+    clearTimeout @popupTimeout.show
+    clearTimeout @popupTimeout.hide
+
+    @popupTimeout.show = setTimeout () ->
+      $('body').addClass 'show-popup'
+    , 4000
+
+    @popupTimeout.hide = setTimeout () ->
+      $('body').removeClass 'show-popup'
+    , 8000
 
   onVideoChanged: (video) ->
     $('#video-title').html(video.snippet.title)
     $('#channel-name').html(video.snippet.channelTitle)
-
-  showTrackBubble: () ->
 
   onMouseMove: () =>
     $('body').removeClass 'hide-controls'
@@ -44,10 +68,6 @@ class AppUI
     @mouseActivityTimeout = setTimeout () ->
       $('body').addClass 'hide-controls'
     , 2000
-
-  onTrack: (event) =>
-    @onTrackChange event.detail[0]
-    setTimeout @showTrackBubble(event.detail[0]), 3000
 
   toggleFullscreen: () ->
     @toggleExpanded()

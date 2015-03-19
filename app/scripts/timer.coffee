@@ -20,6 +20,8 @@ class Timer
       @currentTime += time - @prevTime
       @prevTime = time
 
+      console.info @endTime - @currentTime
+
       if @currentTime >= @endTime
         @stop()
         @callback(@currentTime - @endTime)

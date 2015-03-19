@@ -85,6 +85,7 @@ class Player
 
   makeCurrent: () =>
     @isCurrent = true
+    @YT.setVolume 0 # We always fade in the track, so start vol at 0
     @YT.playVideo()
 
     document.addEventListener 'player_seek', (e) => @seekTo e.detail[1] / 1000

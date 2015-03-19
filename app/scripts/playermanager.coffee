@@ -112,6 +112,7 @@ class PlayerManager
           @timer = new Timer(length - 100)
           @timer.start()
           @timer.onFinished (stepover) =>
+            console.info 'finished'
             context = $('#now-playing').contents()
             $('#next', context).click()
             #duration = 8000
@@ -143,7 +144,7 @@ class PlayerManager
 
       progress = (step++ * CROSSFADE_STEP_SIZE) / duration
 
-      if progress >= 1
+      if progress > 1
         clearInterval interval
         onFinished()
       else
