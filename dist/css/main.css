@@ -120,21 +120,25 @@
   right: 0 !important;
   left: 0 !important;
 }
+.watchmode #main > div:not(#section-watch) > .root {
+  padding-left: 90px;
+  padding-right: 230px;
+}
 .watchmode #suggest-area {
   display: none;
 }
-.watchmode #main-nav,
-.watchmode #now-playing {
+.watchmode.watching #main-nav,
+.watchmode.watching #now-playing {
   opacity: 0.6;
 }
-.watchmode #main-nav:hover,
-.watchmode #now-playing:hover {
+.watchmode.watching #main-nav:hover,
+.watchmode.watching #now-playing:hover {
   opacity: 0.95;
 }
-.watchmode.hide-controls {
+.watchmode.watching.hide-controls {
   cursor: none !important;
 }
-.watchmode.hide-controls #main-nav,
-.watchmode.hide-controls #now-playing {
+.watchmode.watching.hide-controls #main-nav,
+.watchmode.watching.hide-controls #now-playing {
   opacity: 0;
 }

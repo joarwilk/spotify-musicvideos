@@ -4,6 +4,8 @@ class Timer
     @currentTime = 0
     @prevTime = 0
 
+    console.info 'timer created', time
+
   onFinished: (callback) ->
     @callback = callback
 
@@ -20,7 +22,7 @@ class Timer
       @currentTime += time - @prevTime
       @prevTime = time
 
-      console.info @endTime - @currentTime
+      #console.info @endTime - @currentTime
 
       if @currentTime >= @endTime
         @stop()

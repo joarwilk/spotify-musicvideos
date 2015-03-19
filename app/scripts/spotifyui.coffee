@@ -81,6 +81,7 @@ class SpotifyUI
       @showLoadingOverlay()
 
   showWatchTab: () =>
+    $('body').addClass 'watching'
     $('.active').removeClass 'active'
    # $('#main > div').addClass 'hidden'
 
@@ -97,6 +98,8 @@ class SpotifyUI
     history.pushState {}, 'Watch', '/watch'
 
   hideWatchTab: () =>
+    $('body').removeClass 'watching'
+
     @elements.menuItem.removeClass 'active'
     @elements.tab.addClass 'hidden'
 

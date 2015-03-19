@@ -34,7 +34,7 @@ class Player
     , 200
 
 
-    @element = $('#' + @_id)
+    @element = $('#player-' + @_id)
     @playerIsReady = false
     @track = track
     @isCurrent = isCurrent
@@ -60,8 +60,10 @@ class Player
   loadVideo: (id) =>
     @YT.loadVideoById id, 0, 'maxres'
     @YT.setPlaybackQuality 'highres'
-    @YT.setVolume 0 unless @isCurrent
     @YT.seekTo 2, true unless @isCurrent
+
+    @onReady () =>
+      @YT.setVolume 0 unless @isCurrent
 
   togglePlay: (play) =>
     if play then @YT.playVideo() else @YT.pauseVideo()
@@ -99,7 +101,6 @@ class Player
   onBuffering: () ->
 
   remove: () ->
-    console.info 'removing ' + @_id
     @YT.destroy()
     @element.remove()
 

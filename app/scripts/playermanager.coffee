@@ -29,12 +29,12 @@ class PlayerManager
     # Store the track - even if inactive - so we can start mid-song
     document.addEventListener 'player_track_change', @updateCurrentTracks
 
-    document.addEventListener 'player_play', (e) => @timer?.start()
-    document.addEventListener 'player_pause', (e) => @timer?.pause()
+    #document.addEventListener 'player_play', (e) => @timer?.start()
+    #document.addEventListener 'player_pause', (e) => @timer?.pause()
 
 
-    document.addEventListener 'player_seek', (e) =>
-      @timer?.jumpTo e.detail[1]
+    #document.addEventListener 'player_seek', (e) =>
+      #@timer?.jumpTo e.detail[1]
 
   init: () ->
     @players.current = new Player(null, '', true)
@@ -66,11 +66,10 @@ class PlayerManager
     # Is this the first track this session?
     isFirst = !@tracks?
 
+
     # Verify that we only reload the players
     # when the tracks actually change
     if isFirst or event.detail[0]._pid != @tracks.current._pid
-
-      @timer?.stop()
 
       # If we've preloaded this track, swap it into the "current" slot
       if @players.next and @players.next.track._pid == event.detail[0]._pid
@@ -86,6 +85,8 @@ class PlayerManager
 
           @preloadTrack event.detail[1]
 
+          @startTimer()
+
       # if not, load the video into the current player
       else
         @players.current.setTrack event.detail[0]
@@ -93,38 +94,20 @@ class PlayerManager
         @getVideoFromTrack event.detail[0], (video) =>
           @players.current.onReady () =>
             @players.current.loadVideo video.id.videoId
-          @players.current.togglePlay false if isFirst
+            @players.current.togglePlay false if isFirst
+
+            @startTimer()
 
           for callback in @callbacks.onVideoChanged
             callback video
 
         @preloadTrack event.detail[1]
 
-      @players.current.onReady () =>
-
-        id = setInterval () =>
-          length = @players.current.YT.getDuration() * 1000
-
-          return if length == 0
-
-          clearInterval id
-
-          @timer = new Timer(length - 100)
-          @timer.start()
-          @timer.onFinished (stepover) =>
-            console.info 'finished'
-            context = $('#now-playing').contents()
-            $('#next', context).click()
-            #duration = 8000
-            # @players.next.makeCurrent()
-            #@crossfade duration , () ->
-        , 200
-
 
     # If we're playing the same track again, make sure to rewind
     else if !isFirst and event.detail[0]._pid != @tracks.current._pid
       @players.current.seekTo 0
-      @timer.reset()
+      #@timer.reset()
 
     @updateCurrentTracks event
 
@@ -156,11 +139,26 @@ class PlayerManager
   stopCrossfade: () ->
     @crossfadeShouldStop = true
 
+  startTimer: () =>
+    clearInterval @timer
+
+    @timer = setInterval () =>
+      duration = @players.current.YT.getDuration() * 1000
+      current = (@players.current.YT.getCurrentTime() * 1000) + 1000
+
+      return if isNaN duration or parseInt duration == 0
+
+      if duration <= current
+        context = $('#app-player').contents()
+        $('#next', context).click()
+
+        clearInterval @timer
+    , 500
+
   onVideoChanged: (callback) ->
     @callbacks.onVideoChanged.push callback
 
   getVideoFromTrack: (track, callback) ->
-    #console.error track
     params =
       part: 'id,snippet'
       q: "#{track.name} #{track.artistName} offical video"

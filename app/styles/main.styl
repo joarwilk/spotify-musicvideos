@@ -126,28 +126,26 @@
     right: 0 !important
     left: 0 !important
 
+  #main > div:not(#section-watch) > .root
+    padding-left: 90px
+    padding-right: 230px
+
   #suggest-area
     display: none
 
-  .video-wrapper
-    //top: 50% !important
-    //margin: auto
-    //transform: translate(0, -50%);
-
-  #main-nav, #now-playing
-    opacity: 0.6
-
-    &:hover
-      opacity: 0.95
-
-
-  &.hide-controls
-    cursor: none !important
-
+  &.watching
     #main-nav, #now-playing
-      opacity: 0
+      opacity: 0.6
+
+      &:hover
+        opacity: 0.95
 
 
+    &.hide-controls
+      cursor: none !important
+
+      #main-nav, #now-playing
+        opacity: 0
 
 
 

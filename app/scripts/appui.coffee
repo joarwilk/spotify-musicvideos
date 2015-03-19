@@ -19,21 +19,30 @@ class AppUI
   init: () ->
     contexts = $('#app-player').add($('#now-playing-widgets iframe'))
 
-    $(window).keydown (e) =>
-      @toggleExpanded() if e.keyCode is 69
-
-      if e.keyCode is 70
-        @toggleFullscreen()
-        @toggleExpanded()
-
-    context = $('#app-player').contents()
+    $(window).keydown @onKey
 
     $(window).mousemove $.throttle 100, @onMouseMove
-    $('body', context).mousemove () -> console.info 'mousemvvmeiomdas'
 
     document.addEventListener 'player_track_change', @onTrack
 
+  reloadBinds: () =>
+    $('#app-player').contents().on
+      mousemove: $.throttle 100, @onMouseMove
+      keydown: @onKey
+
+    $('#now-playing-widgets iframe').contents().on
+      mousemove: $.throttle 100, @onMouseMove
+      keydown: @onKey
+
+  onKey: (e) =>
+    @toggleExpanded() if e.keyCode is 69
+
+    if e.keyCode is 70
+      @toggleFullscreen()
+      @toggleExpanded()
+
   onTrack: (event) =>
+    @reloadBinds()
     @onTrackChange event.detail[0]
 
   onTrackChange: (track) =>
@@ -55,7 +64,7 @@ class AppUI
 
     @popupTimeout.hide = setTimeout () ->
       $('body').removeClass 'show-popup'
-    , 8000
+    , 9000
 
   onVideoChanged: (video) ->
     $('#video-title').html(video.snippet.title)

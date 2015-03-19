@@ -17,6 +17,7 @@ do ->
   # Messages are emitted in spotify.js
   # and then relayed by background.js
   chrome.runtime.onMessage.addListener (request, sender, sendResponse) ->
+    console.info request.title
     event = new CustomEvent request.title, detail: request.args
     document.dispatchEvent event
 
