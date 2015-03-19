@@ -42,7 +42,7 @@ class Player
 
 
   doBinds: () ->
-    document.addEventListener 'player_set_video_volume', $.throttle 50, (e) => @setVolume e.detail[1] * 100
+    document.addEventListener 'player_set_video_volume', $.throttle 100, (e) => @setVolume e.detail[1] * 100
     document.addEventListener 'player_play', (e) => @togglePlay true
     document.addEventListener 'player_pause', (e) => @togglePlay false
 
@@ -63,7 +63,7 @@ class Player
     @YT.seekTo 2, true unless @isCurrent
 
     @onReady () =>
-      @YT.setVolume 0 unless @isCurrent
+      @setVolume 0 unless @isCurrent
 
   togglePlay: (play) =>
     if play then @YT.playVideo() else @YT.pauseVideo()
@@ -87,7 +87,7 @@ class Player
 
   makeCurrent: () =>
     @isCurrent = true
-    @YT.setVolume 0 # We always fade in the track, so start vol at 0
+    @setVolume 0 # We always fade in the track, so start vol at 0
     @YT.playVideo()
 
     document.addEventListener 'player_seek', (e) => @seekTo e.detail[1] / 1000

@@ -7,6 +7,8 @@ AppUI = (function() {
   POPUP_TRANSITION_DURATION = 300;
 
   function AppUI(wrapperUI) {
+    this.toggleExpanded = __bind(this.toggleExpanded, this);
+    this.toggleFullscreen = __bind(this.toggleFullscreen, this);
     this.onMouseMove = __bind(this.onMouseMove, this);
     this.onTrackChange = __bind(this.onTrackChange, this);
     this.onTrack = __bind(this.onTrack, this);
@@ -90,7 +92,9 @@ AppUI = (function() {
 
   AppUI.prototype.toggleFullscreen = function() {
     var doc;
-    this.toggleExpanded();
+    if (this.isExpanded) {
+      this.toggleExpanded();
+    }
     this.isFullscreen = !this.isFullscreen;
     doc = document.documentElement;
     if (this.isFullscreen) {
@@ -181,7 +185,7 @@ Player = (function() {
   }
 
   Player.prototype.doBinds = function() {
-    document.addEventListener('player_set_video_volume', $.throttle(50, (function(_this) {
+    document.addEventListener('player_set_video_volume', $.throttle(100, (function(_this) {
       return function(e) {
         return _this.setVolume(e.detail[1] * 100);
       };
@@ -223,7 +227,7 @@ Player = (function() {
     return this.onReady((function(_this) {
       return function() {
         if (!_this.isCurrent) {
-          return _this.YT.setVolume(0);
+          return _this.setVolume(0);
         }
       };
     })(this));
@@ -262,7 +266,7 @@ Player = (function() {
 
   Player.prototype.makeCurrent = function() {
     this.isCurrent = true;
-    this.YT.setVolume(0);
+    this.setVolume(0);
     this.YT.playVideo();
     return document.addEventListener('player_seek', (function(_this) {
       return function(e) {
@@ -723,7 +727,6 @@ if (window.location.pathname === '/watch') {
   loadImmediately = window.location.hash === '#watch';
   chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     var event;
-    console.info(request.title);
     event = new CustomEvent(request.title, {
       detail: request.args
     });

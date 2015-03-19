@@ -78,8 +78,8 @@ class AppUI
       $('body').addClass 'hide-controls'
     , 2000
 
-  toggleFullscreen: () ->
-    @toggleExpanded()
+  toggleFullscreen: () =>
+    @toggleExpanded() if @isExpanded # Something is wrong here
 
     @isFullscreen = !@isFullscreen
 
@@ -97,7 +97,7 @@ class AppUI
       else if document.webkitExitFullscreen
         document.webkitExitFullscreen()
 
-  toggleExpanded: () ->
+  toggleExpanded: () =>
     @isExpanded = !@isExpanded
 
     $('body').toggleClass 'watchmode', @isExpanded
