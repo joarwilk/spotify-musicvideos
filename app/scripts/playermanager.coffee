@@ -29,13 +29,6 @@ class PlayerManager
     # Store the track - even if inactive - so we can start mid-song
     document.addEventListener 'player_track_change', @updateCurrentTracks
 
-    #document.addEventListener 'player_play', (e) => @timer?.start()
-    #document.addEventListener 'player_pause', (e) => @timer?.pause()
-
-
-    #document.addEventListener 'player_seek', (e) =>
-      #@timer?.jumpTo e.detail[1]
-
   init: () ->
     @players.current = new Player(null, '', true)
 
@@ -47,6 +40,10 @@ class PlayerManager
       if @tracks?
         @onTrack detail: [@tracks.current, @tracks.next]
     else
+      # Unload the players
+      @players.current.remove()
+      @players.next?.remove()
+
       document.addEventListener 'player_track_change', @updateCurrentTracks
       document.removeEventListener 'player_track_change', @onTrack
 
@@ -65,7 +62,6 @@ class PlayerManager
 
     # Is this the first track this session?
     isFirst = !@tracks?
-
 
     # Verify that we only reload the players
     # when the tracks actually change
@@ -92,7 +88,9 @@ class PlayerManager
         @players.current.setTrack event.detail[0]
 
         @getVideoFromTrack event.detail[0], (video) =>
+          console.info 'video', video
           @players.current.onReady () =>
+            console.info 'onready'
             @players.current.loadVideo video.id.videoId
             @players.current.togglePlay false if isFirst
 

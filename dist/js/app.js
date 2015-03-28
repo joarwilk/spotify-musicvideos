@@ -182,6 +182,7 @@ Player = (function() {
     this.track = track;
     this.isCurrent = isCurrent;
     this.volume = 100;
+    console.info('new player');
   }
 
   Player.prototype.doBinds = function() {
@@ -219,8 +220,8 @@ Player = (function() {
   };
 
   Player.prototype.loadVideo = function(id) {
-    this.YT.loadVideoById(id, 0, 'maxres');
-    this.YT.setPlaybackQuality('highres');
+    this.YT.loadVideoById(id, 0, 'small');
+    this.YT.setPlaybackQuality('small');
     if (!this.isCurrent) {
       this.YT.seekTo(2, true);
     }
@@ -331,6 +332,7 @@ PlayerManager = (function() {
   };
 
   PlayerManager.prototype.setActive = function(isActive) {
+    var _ref;
     if (isActive) {
       document.removeEventListener('player_track_change', this.updateCurrentTracks);
       document.addEventListener('player_track_change', this.onTrack);
@@ -340,6 +342,10 @@ PlayerManager = (function() {
         });
       }
     } else {
+      this.players.current.remove();
+      if ((_ref = this.players.next) != null) {
+        _ref.remove();
+      }
       document.addEventListener('player_track_change', this.updateCurrentTracks);
       return document.removeEventListener('player_track_change', this.onTrack);
     }
@@ -385,7 +391,9 @@ PlayerManager = (function() {
         this.getVideoFromTrack(event.detail[0], (function(_this) {
           return function(video) {
             var callback, _i, _len, _ref, _results;
+            console.info('video', video);
             _this.players.current.onReady(function() {
+              console.info('onready');
               _this.players.current.loadVideo(video.id.videoId);
               if (isFirst) {
                 _this.players.current.togglePlay(false);
@@ -619,6 +627,7 @@ SpotifyUI = (function() {
     var callback, _i, _len, _ref;
     $('body').addClass('watching');
     $('.active').removeClass('active');
+    $('#section-settings').addClass('hidden');
     this.elements.menuItem.addClass('active');
     this.elements.tab.removeClass('hidden');
     this.elements.tab.find('.root').show();
@@ -727,6 +736,7 @@ if (window.location.pathname === '/watch') {
   loadImmediately = window.location.hash === '#watch';
   chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     var event;
+    console.info(request.title);
     event = new CustomEvent(request.title, {
       detail: request.args
     });
@@ -736,6 +746,12 @@ if (window.location.pathname === '/watch') {
     ui.attachMenuItem();
     ui.createWatchTab();
     appUI.init();
+    $('#nav-collection').click(function(e) {
+      console.log(e);
+      e.preventDefault();
+      $('#nav-follow').click();
+      return false;
+    });
     if (loadImmediately) {
       return $('#overlay').show();
     }

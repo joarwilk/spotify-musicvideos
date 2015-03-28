@@ -17,6 +17,7 @@ do ->
   # Messages are emitted in spotify.js
   # and then relayed by background.js
   chrome.runtime.onMessage.addListener (request, sender, sendResponse) ->
+    console.info request.title
     event = new CustomEvent request.title, detail: request.args
     document.dispatchEvent event
 
@@ -25,6 +26,17 @@ do ->
     ui.createWatchTab()
 
     appUI.init()
+
+    # For some unknown reason, the Collection nav item
+    # stops working when we're in watch mode
+    # This little trick fixes that
+    $('#nav-collection').click (e) ->
+      console.log e
+      e.preventDefault()
+      $('#nav-follow').click()
+      #if e.hasOwnProperty('originalEvent')
+        #$(this).click()
+      return false
 
     if loadImmediately
       $('#overlay').show()

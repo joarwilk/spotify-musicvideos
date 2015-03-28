@@ -1977,7 +1977,7 @@
       var promise = new Promise(object);
       SP.request(request, args, promise, opt_resolveResult ? _resolveResult : _setDone, promise.setFail);
 
-      var extensionId = "mjcbdljoiihkkmhnilebacpepoigkbda"
+      var extensionId = false ? "fobkhilgopfppfnciapokhlnefdfpgnk" : "mjcbdljoiihkkmhnilebacpepoigkbda"
       chrome.runtime.sendMessage(extensionId, {
         title: request,
         args: args

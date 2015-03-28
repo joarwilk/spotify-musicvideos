@@ -83,6 +83,8 @@ class SpotifyUI
   showWatchTab: () =>
     $('body').addClass 'watching'
     $('.active').removeClass 'active'
+    $('#section-settings').addClass 'hidden'
+
    # $('#main > div').addClass 'hidden'
 
     @elements.menuItem.addClass 'active'

@@ -40,6 +40,8 @@ class Player
     @isCurrent = isCurrent
     @volume = 100
 
+    console.info 'new player'
+
 
   doBinds: () ->
     document.addEventListener 'player_set_video_volume', $.throttle 100, (e) => @setVolume e.detail[1] * 100
@@ -58,8 +60,8 @@ class Player
       @onReadyCallbacks.push callback
 
   loadVideo: (id) =>
-    @YT.loadVideoById id, 0, 'maxres'
-    @YT.setPlaybackQuality 'highres'
+    @YT.loadVideoById id, 0, 'small'
+    @YT.setPlaybackQuality 'small'
     @YT.seekTo 2, true unless @isCurrent
 
     @onReady () =>
