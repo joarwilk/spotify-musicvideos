@@ -10,4 +10,8 @@ https://chrome.google.com/webstore/detail/spotify-music-videos/fobkhilgopfppfnci
 Load latest version by making a zip out of the dist folder and uploading it on the chrome://extensions page
 
 # Usage
-Click the "Watch" icon in the navbar, or visit https://play.spotify.com/watch
+Navigate to https://play.spotify.com/ and click the "Watch" icon in the navbar, or visit https://play.spotify.com/watch
+
+Key bindings:
+*e*: Expands the video
+*f*: Fullscreen mode
