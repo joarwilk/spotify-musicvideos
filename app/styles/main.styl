@@ -14,11 +14,14 @@
 #section-watch .root
   display: none
   background-color: #000 !important
+  display: flex
+  align-items: center;
+  justify-content: center;
 
 #section-watch .video-wrapper
   height: 0
+  width: 100%
   padding-bottom: 56.25%
-  position: relative
   transition: all 0.2s
 
   iframe
@@ -67,7 +70,8 @@
   bottom: 10%
   left: 7%
   padding: 10px 15px
-  background: #1c1c1f
+  background: #1c1c1f url('chrome-extension://__MSG_@@extension_id__/images/logo.png') left center no-repeat
+  background-size: 37px
   font-family: 'proxima_nova','Helvetica Neue',Helvetica,Arial,sans-serif
   border-radius: 4px
   transition: all 0.5s
@@ -105,9 +109,6 @@
 
     h3
       left: 0
-
-    //h3:first-of-type
-     // top: -8px
 
 #main
   transition: right 0.2s, left 0.2s

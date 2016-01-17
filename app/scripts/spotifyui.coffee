@@ -35,7 +35,6 @@ class SpotifyUI
     return unless @elements.wrapper
 
     height = @elements.wrapper.innerHeight()
-    @elements.wrapper.css top: $(window).height() / 2 - height / 2
 
   doBinds: () ->
     $(document).on 'click', '#nav-watch', @showWatchTab
@@ -84,8 +83,6 @@ class SpotifyUI
     $('body').addClass 'watching'
     $('.active').removeClass 'active'
     $('#section-settings').addClass 'hidden'
-
-   # $('#main > div').addClass 'hidden'
 
     @elements.menuItem.addClass 'active'
     @elements.tab.removeClass 'hidden'

@@ -16,7 +16,7 @@ mocha = require('gulp-mocha');
 
 sources =
   styles: './app/**/*.styl'
-  html: ['./app/*.html', './app/**/*.html', 'app/manifest.json']
+  html: ['./app/*.html', './app/**/*.html', './app/**/*.png', 'app/manifest.json']
   scripts: ['./app/**/!(main)*.coffee', './app/**/main.coffee']
   vendor: './app/scripts/vendor/*.js'
   js: './app/scripts/*.js'

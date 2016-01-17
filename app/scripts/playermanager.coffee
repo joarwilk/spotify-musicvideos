@@ -30,7 +30,14 @@ class PlayerManager
     document.addEventListener 'player_track_change', @updateCurrentTracks
 
   init: () ->
-    @players.current = new Player(null, '', true)
+    unless @initiated
+      @initiated = true
+
+      if (@tracks?.current)
+        @getVideoFromTrack @tracks.current, (video) =>
+          @players.current = new Player(@tracks.current, video.id.videoId, true)
+      else
+        @players.current = new Player(null, '', true)
 
   setActive: (isActive) ->
     if isActive
@@ -103,7 +110,7 @@ class PlayerManager
 
 
     # If we're playing the same track again, make sure to rewind
-    else if !isFirst and event.detail[0]._pid != @tracks.current._pid
+    else if !isFirst and event.detail[0]._pid == @tracks.current._pid
       @players.current.seekTo 0
       #@timer.reset()
 
@@ -140,11 +147,17 @@ class PlayerManager
   startTimer: () =>
     clearInterval @timer
 
+    duration = 0
     @timer = setInterval () =>
-      duration = @players.current.YT.getDuration() * 1000
-      current = (@players.current.YT.getCurrentTime() * 1000) + 1000
+      # If we haven't recieved the duration from the player
+      if isNaN duration or parseInt duration == 0
+        duration = @players.current.YT.getDuration() * 1000
 
-      return if isNaN duration or parseInt duration == 0
+        # If the video duration is still loading
+        if isNaN duration or parseInt duration == 0
+          return
+
+      current = (@players.current.YT.getCurrentTime() * 1000) + 1000
 
       if duration <= current
         context = $('#app-player').contents()

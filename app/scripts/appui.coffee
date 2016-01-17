@@ -101,7 +101,3 @@ class AppUI
     @isExpanded = !@isExpanded
 
     $('body').toggleClass 'watchmode', @isExpanded
-
-    setTimeout () ->
-      $(window).resize()
-    , 500

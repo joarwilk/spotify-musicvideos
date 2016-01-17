@@ -60,8 +60,8 @@ class Player
       @onReadyCallbacks.push callback
 
   loadVideo: (id) =>
-    @YT.loadVideoById id, 0, 'small'
-    @YT.setPlaybackQuality 'small'
+    @YT.loadVideoById id, 0, 'default'
+    @YT.setPlaybackQuality 'default'
     @YT.seekTo 2, true unless @isCurrent
 
     @onReady () =>
@@ -71,7 +71,7 @@ class Player
     if play then @YT.playVideo() else @YT.pauseVideo()
 
   seekTo: (time) =>
-    @YT.seekTo time, true
+    @YT?.seekTo? time, true
 
   setVolume: (volume) =>
     @volume = volume
