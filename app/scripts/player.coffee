@@ -60,8 +60,8 @@ class Player
       @onReadyCallbacks.push callback
 
   loadVideo: (id) =>
-    @YT.loadVideoById id, 0, 'default'
-    @YT.setPlaybackQuality 'default'
+    @YT.loadVideoById id, 0, 'hd1080'
+    @YT.setPlaybackQuality 'hd1080'
     @YT.seekTo 2, true unless @isCurrent
 
     @onReady () =>
