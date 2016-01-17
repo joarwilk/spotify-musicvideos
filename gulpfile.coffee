@@ -12,7 +12,6 @@ runSequence = require 'run-sequence'
 sourcemaps = require('gulp-sourcemaps');
 plumber = require('gulp-plumber');
 
-mocha = require('gulp-mocha');
 
 sources =
   styles: './app/**/*.styl'
@@ -28,11 +27,6 @@ destinations =
   js: 'dist/js'
 
 gulp.task('help', taskListing);
-
-gulp.task 'test', ->
-  gulp.src('test/test.js', {read: false})
-  .pipe(mocha({reporter: 'nyan'}));
-
 
 gulp.task 'style', ->
   gulp.src(sources.styles)
