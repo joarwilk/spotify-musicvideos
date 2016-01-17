@@ -8,6 +8,9 @@ class PlayerManager
 
     @timer = null
 
+    @isFirstVideo = true
+    @playing = false
+
     @YTAPILoaded = false
     @crossfadeShouldStop = false
 
@@ -29,15 +32,21 @@ class PlayerManager
     # Store the track - even if inactive - so we can start mid-song
     document.addEventListener 'player_track_change', @updateCurrentTracks
 
-  init: () ->
+    # Make sure we always know the play state
+    document.addEventListener 'player_play', (e) => @playing = true
+    document.addEventListener 'player_pause', (e) => @playing = false
+
+  init: (callback) ->
     unless @initiated
       @initiated = true
 
       if (@tracks?.current)
         @getVideoFromTrack @tracks.current, (video) =>
           @players.current = new Player(@tracks.current, video.id.videoId, true)
+          callback()
       else
         @players.current = new Player(null, '', true)
+        callback()
 
   setActive: (isActive) ->
     if isActive
@@ -67,12 +76,9 @@ class PlayerManager
   onTrack: (event) =>
     id = 0
 
-    # Is this the first track this session?
-    isFirst = !@tracks?
-
     # Verify that we only reload the players
     # when the tracks actually change
-    if isFirst or event.detail[0]._pid != @tracks.current._pid
+    if @isFirstVideo or event.detail[0]._pid != @tracks.current._pid
 
       # If we've preloaded this track, swap it into the "current" slot
       if @players.next and @players.next.track._pid == event.detail[0]._pid
@@ -94,23 +100,33 @@ class PlayerManager
       else
         @players.current.setTrack event.detail[0]
 
+        isFirst = @isFirstVideo
         @getVideoFromTrack event.detail[0], (video) =>
-          console.info 'video', video
           @players.current.onReady () =>
-            console.info 'onready'
             @players.current.loadVideo video.id.videoId
-            @players.current.togglePlay false if isFirst
+
+            # Ugly hack to show an image instead of a spinner
+            # when the first video is paused
+            if isFirst
+              @players.current.YT.addEventListener 'onStateChange', (state) =>
+                return unless isFirst
+                @players.current.togglePlay true if state.data == 3
+
+                if state.data == 1
+                  isFirst = false
+                  @players.current.togglePlay false unless @playing
 
             @startTimer()
 
           for callback in @callbacks.onVideoChanged
             callback video
 
+        @isFirstVideo = false
         @preloadTrack event.detail[1]
 
 
     # If we're playing the same track again, make sure to rewind
-    else if !isFirst and event.detail[0]._pid == @tracks.current._pid
+    else if !@isFirstVideo and event.detail[0]._pid == @tracks.current._pid
       @players.current.seekTo 0
       #@timer.reset()
 

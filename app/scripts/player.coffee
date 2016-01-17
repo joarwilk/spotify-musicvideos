@@ -40,9 +40,6 @@ class Player
     @isCurrent = isCurrent
     @volume = 100
 
-    console.info 'new player'
-
-
   doBinds: () ->
     document.addEventListener 'player_set_video_volume', $.throttle 100, (e) => @setVolume e.detail[1] * 100
     document.addEventListener 'player_play', (e) => @togglePlay true

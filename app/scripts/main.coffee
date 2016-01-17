@@ -56,11 +56,11 @@ do ->
       $('#section-user').addClass 'hidden' # User tab is open by defaut
       ui.showWatchTab()
 
-      manager.init()
-      manager.setActive true
+      manager.init () ->
+        manager.setActive true
     else
       ui.onTabShown () ->
-        manager.init()
-        manager.setActive true
+        manager.init () ->
+          manager.setActive true
 
 
