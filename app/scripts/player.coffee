@@ -104,5 +104,5 @@ class Player
 
   remove: () ->
     @YT.destroy()
-    @element.remove()
+    $('#player-' + @_id).remove()
 
