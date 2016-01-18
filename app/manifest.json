@@ -3,8 +3,8 @@
 
   "name": "Music Videos for Spotify",
   "description": "Seamlessly watch music videos inside Spotify",
-  "version": "1.4.1",
-  "version_name": "beta 1.4",
+  "version": "1.4.2",
+  "version_name": "Beta 1.4 Hotfix 2",
 
   "permissions": [
     "*://play.spotify.com/",
