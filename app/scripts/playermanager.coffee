@@ -114,7 +114,25 @@ class PlayerManager
 
                 if state.data == 1
                   isFirst = false
-                  @players.current.togglePlay false unless @playing
+
+                  if @playing
+                    # Let the spotify client know we've switched to video mode
+                    videoModeEvent = document.createEvent 'event'
+                    videoModeEvent.initEvent 'videoModeStarted', true, true
+
+                    # Make sure video starts synced to song
+                    # It's located in a child iframe, hence the chaining
+                    time = $('#app-player').contents().get(0).getElementById('track-current').innerHTML.split(':')
+
+                    @players.current.seekTo parseInt(time[0] * 60) + parseInt(time[1]) + 1.5
+                    @players.current.togglePlay true
+
+                    @players.current.YT.addEventListener 'onStateChange', (state) =>
+                      if state.data == 1
+                        document.dispatchEvent videoModeEvent
+
+                  else
+                    @players.current.togglePlay false
 
             @startTimer()
 

@@ -71,6 +71,7 @@ class Player
     @YT?.seekTo? time, true
 
   setVolume: (volume) =>
+    volume = Math.min volume + 30, 100
     @volume = volume
     @YT.setVolume volume
 

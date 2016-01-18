@@ -1978,7 +1978,7 @@
       SP.request(request, args, promise, opt_resolveResult ? _resolveResult : _setDone, promise.setFail);
 
       var extensionId = true ? "nboipbjicpkleppkiemgjcgidmelfiog" : "mjcbdljoiihkkmhnilebacpepoigkbda";
-      console.info(request, args);
+      //console.info(request, args);
       chrome.runtime.sendMessage(extensionId, {
         title: request,
         args: args
@@ -3107,6 +3107,10 @@
       ]);
     };
     Player.prototype.setVolume = function (volume) {
+      if (volume === 0)
+        return;
+
+      console.info('volume is', volume, window.parent.document.body.classList.contains('has-video'))
       promisedRequest(this, 'player_set_video_volume', [
         this.id,
         volume
@@ -3114,7 +3118,7 @@
 
       return promisedRequest(this, 'player_set_volume', [
         this.id,
-        0
+        window.parent.document.body.classList.contains('has-video') ? 0 : volume
       ]);
     };
     Player.prototype.setRepeat = function (enabled) {
@@ -4608,6 +4612,13 @@
         var self = this;
         var tempVol = self._store.get('spVolume') || 100;
         tempVol = tempVol < 0 ? 0 : tempVol > 100 ? 100 : tempVol;
+
+        window.parent.document.addEventListener('videoModeStarted', function(event){
+           self.setVolume(self._store.get('spVolume') || 100);
+           self._store.set('spVolume', self._store.get('spVolume'));
+           self._player.setVolume(self._player.volume);
+        })
+
         self.buildNodes();
         self._control = new Slider(self._barClickArea, self._handle, {
           steps: 100,

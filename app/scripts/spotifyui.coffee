@@ -80,12 +80,13 @@ class SpotifyUI
       @showLoadingOverlay()
 
   showWatchTab: () =>
-    $('body').addClass 'watching'
+    $('body').addClass 'watching has-video'
     $('.active').removeClass 'active'
     $('#section-settings').addClass 'hidden'
 
     @elements.menuItem.addClass 'active'
     @elements.tab.removeClass 'hidden'
+    @elements.tab.attr 'activated', true
 
     @elements.tab.find('.root').show()
 
